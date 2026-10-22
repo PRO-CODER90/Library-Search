@@ -31,11 +31,15 @@ function valueMatches(value, word) {
 }
 
 /** Shape one stored row for API responses. */
-export function presentRow(row, fields, extra = {}) {
+export function presentRow(row, fields, extra = {}, { includeHidden = false } = {}) {
   const data = JSON.parse(row.data);
   // Only expose active fields; inactive ones may linger in appended rows.
+  // Internal fields (the placeholder flag) only for the signed-in admin.
   const visible = {};
-  for (const f of fields) if (data[f.key] !== undefined && data[f.key] !== "") visible[f.key] = data[f.key];
+  for (const f of fields) {
+    if (f.hidden && !includeHidden) continue;
+    if (data[f.key] !== undefined && data[f.key] !== "") visible[f.key] = data[f.key];
+  }
   return { id: row.row_id, ...extra, data: visible, ...locationOf(data, fields) };
 }
 
@@ -46,7 +50,7 @@ function loadRows(db, ids) {
   return new Map(rows.map((r) => [r.row_id, r]));
 }
 
-export function search(db, { q, fields: onlyFields, page = 1, limit = 20 }) {
+export function search(db, { q, fields: onlyFields, page = 1, limit = 20, includeHidden = false }) {
   const words = tokenize(q);
   const fields = listFields(db);
   if (!words.length) return { query: q ?? "", total: 0, page, limit, results: [] };
@@ -86,7 +90,7 @@ export function search(db, { q, fields: onlyFields, page = 1, limit = 20 }) {
     const row = rows.get(s.row_id);
     const data = JSON.parse(row.data);
     const matched = matchFields.filter((f) => words.some((w) => valueMatches(data[f.key], w))).map((f) => f.key);
-    return presentRow(row, fields, { score: s.score, matched });
+    return presentRow(row, fields, { score: s.score, matched }, { includeHidden });
   });
 
   return { query: q, total: scored.length, page, limit, results };
@@ -96,11 +100,27 @@ export function search(db, { q, fields: onlyFields, page = 1, limit = 20 }) {
  * Paged listing for browsing. `filters` is {fieldKey: value} (exact match,
  * case-insensitive).
  */
-export function listBooks(db, { filters = {}, page = 1, limit = 20 }) {
+export function listBooks(db, { filters = {}, page = 1, limit = 20, includeHidden = false, missing = "", duplicates = false }) {
   const fields = listFields(db);
-  const known = new Set(fields.map((f) => f.key));
+  const known = new Set(fields.filter((f) => includeHidden || !f.hidden).map((f) => f.key));
   const clauses = [];
   const params = [];
+  const roleKey = (role) => fields.find((f) => f.role === role)?.key;
+  // missing=<role or field>: books where that field is blank (e.g. missing=author).
+  const missingKey = missing ? roleKey(missing) ?? (known.has(missing) ? missing : null) : null;
+  if (missingKey) {
+    clauses.push("trim(coalesce(json_extract(data, ?), '')) = ''");
+    params.push(jsonPath(missingKey));
+  }
+  // duplicates: books sharing title + first author with another book.
+  if (duplicates) {
+    const authorPath = jsonPath(roleKey("author") ?? "__none__");
+    clauses.push(
+      `row_id IN (SELECT b.row_id FROM books b JOIN (SELECT title_text AS t, lower(trim(coalesce(json_extract(data, ?), ''))) AS a
+        FROM books GROUP BY t, a HAVING count(*) > 1) d ON b.title_text = d.t AND lower(trim(coalesce(json_extract(b.data, ?), ''))) = d.a)`
+    );
+    params.push(authorPath, authorPath);
+  }
   for (const [key, value] of Object.entries(filters)) {
     if (!known.has(key)) continue;
     clauses.push("lower(trim(json_extract(data, ?))) = lower(trim(?))");
@@ -111,7 +131,7 @@ export function listBooks(db, { filters = {}, page = 1, limit = 20 }) {
   const rows = db
     .prepare(`SELECT row_id, data FROM books ${where} ORDER BY title_text, row_id LIMIT ? OFFSET ?`)
     .all(...params, limit, (page - 1) * limit);
-  return { total, page, limit, results: rows.map((r) => presentRow(r, fields)) };
+  return { total, page, limit, results: rows.map((r) => presentRow(r, fields, {}, { includeHidden })) };
 }
 
 /** Distinct values of one field with counts, most common first. */

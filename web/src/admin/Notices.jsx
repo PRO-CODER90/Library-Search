@@ -12,6 +12,7 @@ export default function Notices() {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const load = useCallback(() => call("/api/notices").then(setNotices), [call]);
   useEffect(() => {
@@ -22,9 +23,11 @@ export default function Notices() {
     event.preventDefault();
     setError("");
     try {
-      await call("/api/notices", { method: "POST", body: form });
+      if (editing) await call(`/api/notices/${editing}`, { method: "PUT", body: form });
+      else await call("/api/notices", { method: "POST", body: form });
+      toast(editing ? "Update saved." : "Update posted.");
       setForm(EMPTY);
-      toast("Update posted.");
+      setEditing(null);
       load();
     } catch (err) {
       setError(err.message);
@@ -44,7 +47,7 @@ export default function Notices() {
   return (
     <section>
       <form className="card form" onSubmit={submit}>
-        <h2>Post an update</h2>
+        <h2>{editing ? "Edit update" : "Post an update"}</h2>
         <div className="form-grid">
           <div className="field field-wide">
             <label htmlFor="n-title">Title</label>
@@ -70,9 +73,23 @@ export default function Notices() {
             {error}
           </p>
         )}
-        <button type="submit" className="button">
-          Post update
-        </button>
+        <div className="dialog-actions dialog-actions-start">
+          <button type="submit" className="button">
+            {editing ? "Save changes" : "Post update"}
+          </button>
+          {editing && (
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={() => {
+                setEditing(null);
+                setForm(EMPTY);
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
 
       <h2 className="section-title">Posted updates</h2>
@@ -85,9 +102,22 @@ export default function Notices() {
             </p>
             <h3>{n.title}</h3>
             {n.body && <p>{n.body}</p>}
-            <button type="button" className="button button-small button-danger" onClick={() => setDeleting(n)}>
-              Delete
-            </button>
+            <div className="table-actions">
+              <button
+                type="button"
+                className="button button-small button-ghost"
+                onClick={() => {
+                  setEditing(n.id);
+                  setForm({ title: n.title, body: n.body ?? "", kind: n.kind || "UPDATE" });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                Edit
+              </button>
+              <button type="button" className="button button-small button-danger" onClick={() => setDeleting(n)}>
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>

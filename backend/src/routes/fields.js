@@ -6,8 +6,10 @@ export function registerFieldRoutes(router, { db, auth }) {
   // Active fields for everyone. A signed-in admin can add ?all=true to include
   // removed ones; for anyone else the parameter is ignored.
   router.add("GET", "/api/fields", ({ req, url }) => {
-    const all = url.searchParams.get("all") === "true" && Boolean(auth.session(req));
-    return { fields: listFields(db, { includeInactive: all }) };
+    const admin = Boolean(auth.session(req));
+    const all = url.searchParams.get("all") === "true" && admin;
+    const fields = listFields(db, { includeInactive: all });
+    return { fields: admin ? fields : fields.filter((f) => !f.hidden) };
   });
 
   router.add(

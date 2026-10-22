@@ -401,6 +401,114 @@
   width: 18px;
   height: 18px;
 }
+.upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.preview {
+  margin-top: 18px;
+}
+.summary {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--cream-100);
+}
+.preview-table td {
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-placeholder {
+  background: #fff4d6;
+  color: #7a5200;
+  font-style: italic;
+}
+.legend {
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.chip {
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--navy-700);
+}
+.chip.is-on {
+  background: var(--navy-800);
+  border-color: var(--navy-800);
+  color: var(--cream-50);
+}
+.bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--cream-100);
+}
+.bulk-bar input {
+  width: 90px;
+}
+.loc-cell {
+  white-space: nowrap;
+}
+.loc-input {
+  width: 70px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+.loc-input:focus {
+  outline: 2px solid var(--navy-700);
+  outline-offset: 1px;
+}
+.tag-placeholder {
+  background: #fff4d6;
+  color: #7a5200;
+}
+.placeholder-note {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: #fff4d6;
+  color: #7a5200;
+}
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--navy-700);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+.books-table td {
+  vertical-align: middle;
+}
 @media (max-width: 640px) {
   .form-grid {
     grid-template-columns: 1fr;

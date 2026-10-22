@@ -1,7 +1,7 @@
 // The field registry: which columns exist, how they're labelled, and whether
 // they're searchable, shown on cards, or part of the location.
 
-import { assignRoles, detectType, humanLabel, isIdKey, isLocationKey, ROLES } from "./columnMapper.js";
+import { LABEL_OVERRIDES, assignRoles, detectType, humanLabel, isHiddenKey, isIdKey, isLocationKey, ROLES } from "./columnMapper.js";
 import { compactVariant, normalize } from "../utils/normalize.js";
 
 const FIELD_COLUMNS = "key, label, type, searchable, show_in_card, is_location, role, sort_order, active";
@@ -17,6 +17,7 @@ function toField(row) {
     role: row.role ?? null,
     sort_order: row.sort_order,
     active: Boolean(row.active),
+    hidden: isHiddenKey(row.key),
   };
 }
 
@@ -57,14 +58,14 @@ function insertField(db, field) {
 }
 
 function newFieldDefaults(key, label, type, sortOrder) {
-  const id = isIdKey(key);
+  const quiet = isIdKey(key) || isHiddenKey(key);
   return {
     key,
-    label,
+    label: LABEL_OVERRIDES[key] ?? label,
     type,
-    searchable: !id && (type === "text" || type === "number"),
-    show_in_card: !id,
-    is_location: isLocationKey(key),
+    searchable: !quiet && (type === "text" || type === "number"),
+    show_in_card: !quiet,
+    is_location: !isHiddenKey(key) && isLocationKey(key),
     role: null,
     sort_order: sortOrder,
   };

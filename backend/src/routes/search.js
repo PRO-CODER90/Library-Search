@@ -1,11 +1,11 @@
 import { HttpError, intParam } from "../http.js";
 import { search } from "../services/searchEngine.js";
 
-export function registerSearchRoutes(router, { db }) {
+export function registerSearchRoutes(router, { db, auth }) {
   router.add(
     "GET",
     "/api/search",
-    ({ url }) => {
+    ({ req, url }) => {
       const p = url.searchParams;
       const q = p.get("q") ?? "";
       if (q.length > 200) throw new HttpError(400, "Search text is too long (200 characters max).");
@@ -15,6 +15,7 @@ export function registerSearchRoutes(router, { db }) {
         fields,
         page: intParam(p.get("page"), 1, 1, 100000),
         limit: intParam(p.get("limit"), 20, 1, 100),
+        includeHidden: Boolean(auth.session(req)),
       });
     },
     { rateLimit: "search" }

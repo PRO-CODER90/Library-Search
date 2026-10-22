@@ -88,37 +88,70 @@ export function parseRows(text, delimiter) {
   return rows;
 }
 
-/** Full pipeline. Returns { columns: [{key,label}], records, delimiter, encoding, warnings }. */
-export function readCsv(buffer) {
-  const { text, encoding } = decode(buffer);
-  const delimiter = detectDelimiter(text);
-  const rows = parseRows(text, delimiter);
-  if (!rows.length) throw new CsvError("The file is empty.");
+// Template rows between the header and the data ("M"/"O", "Text",
+// "Alphanumeric", "Start entering data from Row 8").
+const META_CELL = /^(m|o|text|alphanumeric|numeric|date|mandatory|optional)$/i;
+const isBlankRow = (cells) => !cells.some((c) => String(c ?? "").trim());
+const isMetaRow = (cells) => {
+  const filled = cells.map((c) => String(c ?? "").trim()).filter(Boolean);
+  if (!filled.length) return false;
+  if (/^start entering data/i.test(filled[0])) return true;
+  return filled.every((c) => META_CELL.test(c));
+};
 
-  const [headerRow, ...dataRows] = rows;
-  if (headerRow.length > LIMITS.maxColumns) {
-    throw new CsvError(`Too many columns (${headerRow.length}); the limit is ${LIMITS.maxColumns}.`);
+/**
+ * Rows of strings -> { columns, records, warnings, headerRow, dataRow }.
+ * The header is the first of the first 10 rows that has a "Title" cell (else
+ * the first non-empty row, or an error with `requireTitle`). Leading template
+ * rows after it are skipped.
+ */
+export function tabulate(rows, { requireTitle = false, dropBlankColumns = false, raggedWarnings = true } = {}) {
+  if (!rows.length || rows.every(isBlankRow)) throw new CsvError("The file is empty.");
+  let headerIndex = rows.slice(0, 10).findIndex((r) => r.some((c) => String(c ?? "").trim().toLowerCase() === "title"));
+  if (headerIndex === -1) {
+    if (requireTitle) throw new CsvError("Header row not found: none of the first 10 rows has a “Title” column.");
+    headerIndex = rows.findIndex((r) => !isBlankRow(r));
   }
+  const header = rows[headerIndex];
+  const above = rows[headerIndex - 1] ?? [];
+  const width = Math.max(header.length, above.length);
+  const used = [];
+  for (let i = 0; i < width; i++) {
+    let label = String(header[i] ?? "").trim();
+    // A key column named in the row above the header (the template's entity_id).
+    if (!label && /^entity_id$/i.test(String(above[i] ?? "").trim())) label = "entity_id";
+    if (label || (!dropBlankColumns && i < header.length)) used.push({ index: i, label: String(header[i] ?? "").trim() ? header[i] : label });
+  }
+  if (used.length > LIMITS.maxColumns) {
+    throw new CsvError(`Too many columns (${used.length}); the limit is ${LIMITS.maxColumns}.`);
+  }
+  if (!used.length) throw new CsvError("The header row has no column names.");
+  const columns = headerKeys(used.map((u) => u.label)).map((c, i) => ({ ...c, index: used[i].index }));
+
+  let start = headerIndex + 1;
+  while (start < rows.length && (isMetaRow(rows[start]) || isBlankRow(rows[start]))) start++;
+  const dataRows = rows.slice(start);
   if (dataRows.length > LIMITS.maxRows) {
     throw new CsvError(`Too many rows (${dataRows.length}); the limit is ${LIMITS.maxRows}.`);
   }
-  const columns = headerKeys(headerRow);
+
   const warnings = [];
   let padded = 0;
   let trimmed = 0;
   let empty = 0;
-
   const records = [];
   for (const cells of dataRows) {
-    if (cells.length < columns.length) padded++;
-    else if (cells.length > columns.length && cells.slice(columns.length).some((c) => c.trim())) trimmed++;
+    if (raggedWarnings) {
+      if (cells.length < header.length) padded++;
+      else if (cells.length > header.length && cells.slice(header.length).some((c) => String(c).trim())) trimmed++;
+    }
     const record = {};
     let hasValue = false;
-    columns.forEach(({ key }, i) => {
-      const value = sanitizeCell((cells[i] ?? "").trim());
+    for (const { key, index } of columns) {
+      const value = sanitizeCell(String(cells[index] ?? "").trim());
       record[key] = value;
       if (value) hasValue = true;
-    });
+    }
     if (hasValue) records.push(record);
     else empty++;
   }
@@ -128,5 +161,19 @@ export function readCsv(buffer) {
   if (empty) warnings.push(`${empty} empty row${empty === 1 ? " was" : "s were"} skipped.`);
   if (!records.length) throw new CsvError("The file has a header row but no data rows.");
 
-  return { columns, records, delimiter, encoding, warnings };
+  return {
+    columns: columns.map(({ key, label }) => ({ key, label })),
+    records,
+    warnings,
+    headerRow: headerIndex + 1,
+    dataRow: start + 1,
+  };
+}
+
+/** CSV pipeline. Returns { columns, records, delimiter, encoding, warnings, headerRow, dataRow }. */
+export function readCsv(buffer) {
+  const { text, encoding } = decode(buffer);
+  const delimiter = detectDelimiter(text);
+  const rows = parseRows(text, delimiter);
+  return { ...tabulate(rows), delimiter, encoding };
 }

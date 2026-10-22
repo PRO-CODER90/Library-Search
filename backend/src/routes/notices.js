@@ -29,6 +29,20 @@ export function registerNoticeRoutes(router, { db, audit }) {
   );
 
   router.add(
+    "PUT",
+    "/api/notices/:id",
+    async ({ req, params }) => {
+      const { title, body, kind } = cleanNotice(await readJson(req));
+      const id = Number(params.id);
+      if (!db.prepare("UPDATE notices SET title = ?, body = ?, kind = ? WHERE id = ?").run(title, body, kind, id).changes) {
+        throw new HttpError(404, "Notice not found.");
+      }
+      return db.prepare("SELECT id, title, body, kind, created_at AS createdAt FROM notices WHERE id = ?").get(id);
+    },
+    { admin: true }
+  );
+
+  router.add(
     "DELETE",
     "/api/notices/:id",
     ({ req, params, session }) => {

@@ -7,7 +7,7 @@ export const ROLES = ["title", "author", "category", "availability"];
 
 const ROLE_ALIASES = {
   title: ["title", "book_title", "name", "book_name", "book"],
-  author: ["author", "authors", "writer", "by", "author_name"],
+  author: ["author", "authors", "writer", "by", "author_name", "first_author_full_name", "author_full_name", "first_author"],
   category: ["category", "subject", "genre", "section", "department", "class"],
   availability: ["available", "availability", "status", "in_stock"],
 };
@@ -18,7 +18,18 @@ const LOCATION_ALIASES = new Set([
 ]);
 
 // Columns that identify a record but are noise in search results.
-const ID_KEYS = new Set(["id", "sr_no", "srno", "s_no", "serial", "serial_no"]);
+const ID_KEYS = new Set(["id", "sr_no", "srno", "s_no", "serial", "serial_no", "entity_id"]);
+
+// Internal fields: kept with the book but never shown or searched publicly.
+const HIDDEN_KEYS = new Set(["location_is_placeholder"]);
+export const isHiddenKey = (key) => HIDDEN_KEYS.has(key);
+
+// Friendlier labels for known template columns.
+export const LABEL_OVERRIDES = {
+  first_author_full_name: "First author",
+  second_author_full_name: "Second author",
+  location_is_placeholder: "Placeholder location",
+};
 
 /** "  ISBN-13 " -> "isbn_13"; non-Latin letters are kept. */
 export function toKey(header) {
