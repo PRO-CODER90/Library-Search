@@ -1,0 +1,26 @@
+id,title,author,category,isbn,floor,rack,shelf,copies,available
+1,Harry Potter and the Philosopher's Stone,J.K. Rowling,Fiction,9780747532699,1,R-02,A,3,yes
+2,Harry Potter and the Chamber of Secrets,J.K. Rowling,Fiction,9780747538493,1,R-02,A,2,yes
+3,Introduction to Algorithms,Thomas H. Cormen,Computer Science,9780262046305,2,R-07,C,3,yes
+4,Clean Code,Robert C. Martin,Computer Science,9780132350884,2,R-07,D,2,no
+5,Wings of Fire,A.P.J. Abdul Kalam,Biography,9788173711466,1,R-05,B,4,no
+6,Concepts of Physics,H.C. Verma,Physics,9788177091878,3,R-11,D,5,yes
+7,The Alchemist,Paulo Coelho,Fiction,9780062315007,1,R-02,C,2,yes
+8,Discovery of India,Jawaharlal Nehru,History,9780143031031,2,R-09,A,1,yes
+9,A Brief History of Time,Stephen Hawking,Science,9780553380163,3,R-12,B,2,yes
+10,Atomic Habits,James Clear,Self Help,9780735211292,1,R-04,A,6,yes
+11,The Great Gatsby,F. Scott Fitzgerald,Fiction,9780743273565,1,R-03,B,2,yes
+12,To Kill a Mockingbird,Harper Lee,Fiction,9780061120084,1,R-03,B,3,no
+13,Python Crash Course,Eric Matthes,Computer Science,9781593279288,2,R-08,A,4,yes
+14,Data Structures Using C,Reema Thareja,Computer Science,9780198099307,2,R-08,B,3,yes
+15,Organic Chemistry,Morrison and Boyd,Chemistry,9780136436690,3,R-13,A,2,yes
+16,Fundamentals of Physics,Halliday and Resnick,Physics,9781119306856,3,R-11,C,3,yes
+17,Rich Dad Poor Dad,Robert Kiyosaki,Finance,9781612680194,1,R-04,C,5,yes
+18,The白 Silk Road,Valerie Hansen,History,9780199935369,2,R-09,C,1,yes
+19,Ignited Minds,A.P.J. Abdul Kalam,Self Help,9780143033684,1,R-04,B,2,yes
+20,Engineering Mathematics,B.S. Grewal,Mathematics,9788174091956,3,R-14,A,6,yes
+21,Let Us C,Yashavant Kanetkar,Computer Science,9788183331630,2,R-08,C,7,yes
+22,Malgudi Days,R.K. Narayan,Fiction,9780143039655,1,R-03,C,3,yes
+23,Zen and the Art of Motorcycle Maintenance,Robert M. Pirsig,Philosophy,9780060839871,2,R-10,A,1,yes
+24,Quantum Mechanics,David J. Griffiths,Physics,9781107179868,3,R-11,E,2,no
+25,Zero to One,Peter Thiel,Business,9780804139298,1,R-04,D,3,yes

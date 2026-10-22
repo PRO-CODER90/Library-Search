@@ -1,0 +1,18 @@
+{
+  "name": "library-search",
+  "version": "3.0.0",
+  "description": "Poornima University Central Library book locator: React frontend, Node.js backend.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
+    "start": "node --disable-warning=ExperimentalWarning backend/src/server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch backend/src/server.js",
+    "dev:web": "npm --prefix web run dev",
+    "test": "node --disable-warning=ExperimentalWarning --test 'backend/tests/*.test.js'",
+    "bench": "node --disable-warning=ExperimentalWarning backend/tests/bench.js",
+    "admin:hash": "node backend/scripts/admin-hash.js"
+  },
+  "engines": { "node": ">=22.13" },
+  "license": "MIT"
+}
