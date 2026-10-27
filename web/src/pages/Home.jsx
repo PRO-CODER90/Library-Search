@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, toQuery } from "../api.js";
 import { useApi, useDebounced, useDocumentTitle } from "../hooks.js";
 import { useSchema } from "../schema.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import { Icon } from "../components/Icon.jsx";
-import { BookCard, EmptyState, ErrorState, SectionHeading, Skeleton, ViewAllLink, formatDate } from "../components/ui.jsx";
+import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 
 const PAGE_SIZE = 20;
 
@@ -34,8 +34,9 @@ function StatsRow() {
 function Hero({ query, onQuery, onSubmit }) {
   return (
     <section className="hero">
-      <img className="decor decor-botanical" src="/art/botanical-left.png" alt="" aria-hidden="true" loading="lazy" />
+      <img className="decor decor-botanical" src="/art/botanical-pink.png" width="140" height="320" alt="" aria-hidden="true" loading="lazy" />
       <div className="hero-copy">
+        <img className="decor decor-campus" src="/art/campus-sketch-pink.png" width="472" height="238" alt="" aria-hidden="true" loading="lazy" />
         <p className="eyebrow">
           <span>PU Library · Book Index 01</span>
         </p>
@@ -46,51 +47,29 @@ function Hero({ query, onQuery, onSubmit }) {
         </h1>
         <p className="hero-sub">Search by title, author, subject or shelf code.</p>
         <p className="hero-hint">One letter is enough to get started.</p>
-        <img className="decor decor-campus" src="/art/campus-sketch.png" alt="" aria-hidden="true" loading="lazy" />
         <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} autoFocus />
         <StatsRow />
       </div>
       <div className="hero-photo">
         <picture>
-          <source srcSet="/art/hero-library.webp" type="image/webp" />
-          <img src="/art/hero-library.jpg" width="490" height="452" alt="Reading room of the central library" fetchPriority="high" />
+          <source srcSet="/art/hero-building.webp" type="image/webp" />
+          <img src="/art/hero-building.jpg" width="824" height="524" alt="The Poornima University central library building" fetchPriority="high" />
         </picture>
+        <svg className="hero-photo-edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0H62C24 26 40 64 0 100Z" fill="currentColor" />
+          <path d="M62 0C24 26 40 64 0 100" fill="none" stroke="#e8348a" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <span className="petal" aria-hidden="true" />
+        <span className="petal" aria-hidden="true" />
+        <span className="petal" aria-hidden="true" />
+        <span className="petal" aria-hidden="true" />
       </div>
-    </section>
-  );
-}
-
-function UpdateCard({ notice }) {
-  return (
-    <li>
-      <Link className="update-card" to="/updates">
-        <picture className="update-thumb">
-          <source srcSet="/art/notice-books.webp" type="image/webp" />
-          <img src="/art/notice-books.jpg" width="250" height="118" alt="" loading="lazy" />
-        </picture>
-        <span className="update-body">
-          <span className="update-meta">
-            <span className="pill">{notice.kind || "UPDATE"}</span>
-            <time dateTime={notice.createdAt}>{formatDate(notice.createdAt)}</time>
-          </span>
-          <span className="update-title">{notice.title}</span>
-          {notice.body && <span className="update-text">{notice.body}</span>}
-        </span>
-        <Icon name="arrow-right" size={24} className="update-arrow" />
-      </Link>
-    </li>
-  );
-}
-
-function LatestUpdates() {
-  const { data, error, loading } = useApi("/api/notices");
-  if (error) return null;
-  if (!loading && !data?.length) return null;
-  return (
-    <section className="section updates-section">
-      <img className="decor decor-books" src="/art/book-stack.png" alt="" aria-hidden="true" loading="lazy" />
-      <SectionHeading action={<ViewAllLink to="/updates">View all updates</ViewAllLink>}>Library updates</SectionHeading>
-      {loading ? <Skeleton lines={2} /> : <ul className="update-list">{data.slice(0, 3).map((n) => <UpdateCard key={n.id} notice={n} />)}</ul>}
+      <svg className="hero-wave" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
+        <path className="wave-pink" d="M0 38C300 104 620 122 930 100 1160 84 1320 34 1440 6V34C1300 64 1140 112 920 122 600 136 280 118 0 72Z" />
+        <path className="wave-navy" d="M0 70C300 118 620 132 920 126 1150 120 1310 60 1440 30V140C1000 130 560 148 0 136Z" />
+        <path className="wave-white" d="M0 134C520 150 1000 124 1440 134V150H0Z" />
+      </svg>
+      <img className="decor decor-cricket" src="/art/cricket-skyline.png" width="260" height="135" alt="" aria-hidden="true" loading="lazy" />
     </section>
   );
 }
@@ -177,7 +156,7 @@ export default function Home() {
   return (
     <>
       <Hero query={query} onQuery={setQuery} onSubmit={submit} />
-      {urlQuery ? <Results q={urlQuery} /> : <LatestUpdates />}
+      {urlQuery && <Results q={urlQuery} />}
     </>
   );
 }

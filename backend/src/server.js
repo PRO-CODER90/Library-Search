@@ -16,11 +16,10 @@ import { registerSearchRoutes } from "./routes/search.js";
 import { registerBookRoutes } from "./routes/books.js";
 import { registerFieldRoutes } from "./routes/fields.js";
 import { registerUploadRoutes } from "./routes/upload.js";
-import { registerNoticeRoutes } from "./routes/notices.js";
 import { registerAdminSessionRoutes } from "./routes/adminSession.js";
 
-// Admin-only endpoints answer exactly like a path that doesn't exist.
 const notFound = () => new HttpError(404, "Unknown API endpoint.");
+const signInRequired = () => new HttpError(401, "Sign in required.");
 
 export function createApp({ db, config, log }) {
   const audit = createAudit({ trustProxy: config.trustProxy, log });
@@ -41,24 +40,19 @@ export function createApp({ db, config, log }) {
   registerBookRoutes(router, ctx);
   registerFieldRoutes(router, ctx);
   registerUploadRoutes(router, ctx);
-  registerNoticeRoutes(router, ctx);
-  if (auth.enabled) registerAdminSessionRoutes(router, ctx);
+  registerAdminSessionRoutes(router, ctx);
   const serveStatic = createStaticHandler(config);
 
   async function handleApi(req, res, url) {
     const found = router.match(req.method, url.pathname);
     if (!found) throw notFound();
-    if (found.methodNotAllowed) {
-      // Don't reveal that an admin-only path exists.
-      if (!found.publicPath && !auth.session(req)) throw notFound();
-      throw new HttpError(405, "Method not allowed.");
-    }
+    if (found.methodNotAllowed) throw new HttpError(405, "Method not allowed.");
     const { route, params } = found;
 
     let session = null;
     if (route.admin) {
       session = auth.session(req);
-      if (!session) throw notFound();
+      if (!session) throw signInRequired();
       if (!auth.csrfOk(req)) throw new HttpError(403, "Forbidden.");
       res.setHeader("X-Robots-Tag", "noindex, nofollow");
     }
@@ -109,11 +103,6 @@ export function loadSampleIfEmpty(db, config) {
   const empty = db.prepare("SELECT (SELECT count(*) FROM books) + (SELECT count(*) FROM fields) AS n").get().n === 0;
   if (!empty) return null;
   const report = importCsv(db, { buffer: readFileSync(config.sampleFile), filename: "sample-books.csv", mode: "replace" });
-  db.prepare("INSERT INTO notices (title, body, kind) VALUES (?, ?, ?)").run(
-    "Welcome to the library search",
-    "Type any part of a title, author, subject or shelf code to see exactly where a book is kept.",
-    "NEW"
-  );
   return report;
 }
 

@@ -25,7 +25,7 @@ export function registerBookRoutes(router, { db, config, audit, auth }) {
   }));
 
   // Public config: only what the public UI needs. Nothing about admin.
-  router.add("GET", "/api/config", () => ({ libraryName: config.libraryName }));
+  router.add("GET", "/api/config", () => ({ libraryName: config.libraryName, adminEnabled: auth.enabled }));
 
   router.add("GET", "/api/stats", () => libraryStats(db));
 

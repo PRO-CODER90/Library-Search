@@ -1,18 +1,21 @@
 :root {
   color-scheme: light;
 
-  /* Palette (approved mock-up) */
-  --navy-900: #0b2a4a;
-  --navy-800: #0f3560;
-  --navy-700: #14407a;
-  --cream-50: #fbf6ea;
-  --cream-100: #f5eedc;
-  --cream-200: #efe5cc;
-  --gold-500: #c8962e;
-  --gold-700: #9a6f12; /* gold for small text: AA on cream */
-  --ink-900: #1c2433;
-  --ink-600: #4a4a4a;
-  --line: #e4d8bc;
+  /* Palette: navy + pink (approved mock-up) */
+  --navy-900: #0b1f4d;
+  --navy-800: #132c66;
+  --navy-700: #1b3a80;
+  --pink-600: #c41f6e; /* pink for small text: AA on white */
+  --pink-550: #d92a7c; /* buttons with white text: AA */
+  --pink-500: #e8348a;
+  --pink-300: #ff7ab8; /* pink text on navy: AA */
+  --pink-100: #fde7f1;
+  --pink-50: #fff3f8;
+  --bg: #fff8fb;
+  --butter: #f6d77a; /* "Book Locator" on the navy header */
+  --ink-900: #16213e;
+  --ink-600: #5b6275;
+  --line: #f1d6e4;
   --white: #ffffff;
 
   --ok: #1d6b3a;
@@ -21,10 +24,10 @@
   --off-soft: #f8e2dd;
   --danger: #b42318;
 
-  --radius: 12px;
+  --radius: 14px;
   --radius-sm: 8px;
-  --shadow: 0 2px 14px rgba(11, 42, 74, 0.08);
-  --shadow-lift: 0 8px 26px rgba(11, 42, 74, 0.14);
+  --shadow: 0 4px 18px rgba(11, 31, 77, 0.08);
+  --shadow-lift: 0 10px 28px rgba(11, 31, 77, 0.14);
 
   --font-serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

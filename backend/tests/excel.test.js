@@ -182,7 +182,7 @@ describe("uploading the supplied template", () => {
       assert.equal(now.location, "Floor 3 · Rack R-11 · Shelf D");
       assert.ok(!now.data.location_is_placeholder);
     }
-    assert.equal((await app.call("/api/books/location", { method: "PATCH", body: { ids: [1], values: { floor: "1" } } })).status, 404, "admin only");
+    assert.equal((await app.call("/api/books/location", { method: "PATCH", body: { ids: [1], values: { floor: "1" } } })).status, 401, "admin only");
   });
 
   test("filters: missing author, duplicates", async () => {
@@ -210,7 +210,7 @@ describe("uploading the supplied template", () => {
     const t = readXlsx(Buffer.from(await template.arrayBuffer()));
     assert.equal(t.sheetName, "Holding_Creation");
     assert.ok(t.rows[0].includes("Title") && t.rows[0].includes("Second author") && !t.rows[0].includes("Placeholder location"));
-    assert.equal((await app.raw("/api/template")).status, 404, "admin only");
+    assert.equal((await app.raw("/api/template")).status, 401, "admin only");
   });
 
   test("invalid files: clear errors, data untouched", async () => {

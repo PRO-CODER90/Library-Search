@@ -3,7 +3,6 @@
 import { Link } from "react-router-dom";
 import { highlightSegments } from "@shared/search.js";
 import { formatValue, isTruthy, titleOf } from "../schema.jsx";
-import { Icon } from "./Icon.jsx";
 
 export function Highlight({ text, query }) {
   if (!query) return <>{text}</>;
@@ -166,28 +165,4 @@ export function CategoryTiles({ facet }) {
       ))}
     </ul>
   );
-}
-
-export function SectionHeading({ children, action }) {
-  return (
-    <div className="section-heading">
-      <h2>{children}</h2>
-      <span className="section-rule" aria-hidden="true" />
-      {action}
-    </div>
-  );
-}
-
-export function ViewAllLink({ to, children }) {
-  return (
-    <Link className="view-all" to={to}>
-      {children} <Icon name="arrow-right" />
-    </Link>
-  );
-}
-
-export function formatDate(iso) {
-  if (!iso) return "";
-  const d = new Date(iso.includes("T") ? iso : `${iso.replace(" ", "T")}Z`);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }

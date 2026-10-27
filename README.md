@@ -15,15 +15,15 @@ npm test           # 70 backend tests
 npm run dev & npm run dev:web   # API on :5000, Vite dev server with /api proxy
 ```
 
-Node 22.13+ required. In development the server prints a one-off admin URL and password.
+Node 22.13+ required. In development the server prints a one-off admin password for `/login`.
 
 ## Features
 
 - Live, ranked, accent-insensitive search over every searchable field (one letter is enough; `R-07` = `r07`), with highlighting.
 - Location "call slip", step-by-step directions and a shelf diagram for every book.
-- Browse by category; library updates with badges (NEW ARRIVAL, …).
+- Excel (.xlsx) or CSV catalogue upload with preview, placeholder shelf locations and inline editing.
 - **Schema-less catalogue:** upload any CSV; columns become fields automatically (replace / append / upsert, dry-run diff). The UI renders from `/api/fields`, never from hard-coded column names.
-- **Hidden admin:** no public link or mention. It lives at `/<ADMIN_PATH>`; only the SHA-256 of that path is in the public bundle and the admin UI is a separate lazy chunk. Sign-in with a scrypt-hashed password, `HttpOnly; SameSite=Strict` session cookie, CSRF header, rate limiting, audit log. Without a session every admin endpoint answers 404.
+- **Admin:** the header's **Login** button opens `/login`; the dashboard is `/admin` (Books, Upload, Fields; a separate lazy chunk, `noindex`). Sign-in with a scrypt-hashed password, `HttpOnly; SameSite=Strict` session cookie, CSRF header, rate limiting (10 failures / 15 min), audit log. Without a session every admin endpoint answers 401.
 
 ## Admin setup
 
@@ -31,7 +31,7 @@ Node 22.13+ required. In development the server prints a one-off admin URL and p
 npm run admin:hash -- --generate
 ```
 
-Set the printed `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_PATH` and `SESSION_SECRET` in the environment (Vercel → Settings → Environment Variables), redeploy, then open `/<ADMIN_PATH>`. Production refuses to start with a partial or weak setup; on Vercel with none set the site runs public-only.
+Set the printed `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` and `SESSION_SECRET` in the environment (Vercel → Settings → Environment Variables), redeploy, then click **Login**. Production refuses to start with a partial or weak setup; on Vercel with none set, sign-in is off.
 
 ## Deploy (Vercel)
 

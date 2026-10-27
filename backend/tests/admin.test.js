@@ -1,4 +1,4 @@
-// Spec "React migration and admin lockdown" §2.6: hidden, server-enforced admin.
+// Visible Login, server-enforced admin: every admin API answers 401 without a session.
 
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -6,21 +6,17 @@ import { createHash, createHmac } from "node:crypto";
 import { ADMIN, ADMIN_ENV, CSRF, TOKEN, sample, startApp } from "./helpers.js";
 import { ConfigError, loadConfig } from "../src/config.js";
 
-const P = `/api/${ADMIN.path}`;
+const P = "/api/auth";
 
 // Every admin-only endpoint (method, path, body).
 const ADMIN_ENDPOINTS = [
   ["POST", "/api/upload", undefined],
-  ["GET", "/api/upload", undefined], // wrong method on an admin-only path
   ["PATCH", "/api/fields/title", { label: "x" }],
   ["POST", "/api/books", { title: "x" }],
   ["PUT", "/api/books/1", { title: "x" }],
   ["DELETE", "/api/books/1", undefined],
   ["DELETE", "/api/books?confirm=yes", undefined],
   ["GET", "/api/export", undefined],
-  ["POST", "/api/notices", { title: "x" }],
-  ["DELETE", "/api/notices/1", undefined],
-  ["GET", `${P}/me`, undefined],
   ["POST", `${P}/logout`, undefined],
 ];
 
@@ -30,12 +26,10 @@ function forgeCookie({ exp, username = ADMIN.username, secret = ADMIN_ENV.SESSIO
   return `lib_session=${payload}.${createHmac("sha256", key).update(payload).digest("base64url")}`;
 }
 
-describe("admin endpoints are invisible without a session", () => {
+describe("admin endpoints reject requests without a session", () => {
   let app;
-  let unknown;
   before(async () => {
     app = await startApp();
-    unknown = await app.raw("/api/definitely-not-a-route");
   });
   after(() => app.close());
 
@@ -48,12 +42,12 @@ describe("admin endpoints are invisible without a session", () => {
   };
 
   for (const [name, h] of Object.entries(variants)) {
-    test(`every admin endpoint → 404 with ${name}`, async () => {
+    test(`every admin endpoint → 401 with ${name}`, async () => {
       const headers = { ...CSRF, ...(typeof h === "function" ? h() : h) };
       for (const [method, path, body] of ADMIN_ENDPOINTS) {
         const res = await app.raw(path, { method, body, headers });
-        assert.equal(res.status, 404, `${method} ${path} → ${res.status}`);
-        assert.equal(res.text, unknown.text, `${method} ${path} body differs from an unknown route`);
+        assert.equal(res.status, 401, `${method} ${path} → ${res.status}`);
+        assert.deepEqual(res.data, { error: "Sign in required." });
       }
     });
   }
@@ -61,19 +55,26 @@ describe("admin endpoints are invisible without a session", () => {
   test("a validly signed, unexpired cookie does work (control)", async () => {
     const res = await app.raw(`${P}/me`, { headers: { Cookie: forgeCookie({ exp: Date.now() + 60000 }) } });
     assert.equal(res.status, 200);
+    assert.equal(res.data.authenticated, true);
+    assert.equal((await app.raw(`${P}/me`)).data.authenticated, false, "signed out: public answer, no error");
   });
 
-  test("public config exposes nothing about admin", async () => {
+  test("wrong method on an admin path → 405", async () => {
+    assert.equal((await app.raw("/api/upload", { headers: CSRF })).status, 405);
+  });
+
+  test("public endpoints leak no secrets", async () => {
     const config = await app.raw("/api/config");
-    assert.deepEqual(Object.keys(config.data), ["libraryName"]);
-    for (const path of ["/api/config", "/api/health", "/api/stats", "/api/fields", "/api/notices", "/api/search?q=a"]) {
+    assert.deepEqual(Object.keys(config.data), ["libraryName", "adminEnabled"]);
+    assert.equal(config.data.adminEnabled, true);
+    for (const path of ["/api/config", "/api/health", "/api/stats", "/api/fields", "/api/search?q=a", `${P}/me`]) {
       const res = await app.raw(path);
-      assert.doesNotMatch(res.text, /admin|staff|token/i, `${path} mentions admin`);
+      assert.doesNotMatch(res.text, /token|password|secret/i, `${path} leaks`);
     }
   });
 
-  test("the old /api/admin/* and /api/auth/login paths don't exist", async () => {
-    for (const path of ["/api/admin/check", "/api/admin/me", "/api/admin/login", "/api/auth/login"]) {
+  test("the removed /api/admin/* and /api/notices paths don't exist", async () => {
+    for (const path of ["/api/admin/check", "/api/admin/me", "/api/admin/login", "/api/notices", "/api/notices/1"]) {
       for (const method of ["GET", "POST"]) {
         assert.equal((await app.raw(path, { method, headers: CSRF, body: method === "POST" ? {} : undefined })).status, 404, path);
       }
@@ -150,9 +151,9 @@ describe("sign-in, session cookie, CSRF and sign-out", () => {
     const app = await startApp();
     await app.login();
     const cookie = app.cookie;
-    const post = await app.raw("/api/notices", { method: "POST", body: { title: "x" }, headers: { Cookie: cookie } });
+    const post = await app.raw("/api/books", { method: "POST", body: { title: "x" }, headers: { Cookie: cookie } });
     const del = await app.raw("/api/books?confirm=yes", { method: "DELETE", headers: { Cookie: cookie } });
-    const wrong = await app.raw("/api/notices", { method: "POST", body: { title: "x" }, headers: { Cookie: cookie, "X-Requested-With": "XMLHttpRequest" } });
+    const wrong = await app.raw("/api/books", { method: "POST", body: { title: "x" }, headers: { Cookie: cookie, "X-Requested-With": "XMLHttpRequest" } });
     const read = await app.raw(`${P}/me`, { headers: { Cookie: cookie } });
     assert.deepEqual([post.status, del.status, wrong.status, read.status], [403, 403, 403, 200]);
     assert.ok((await app.raw("/api/health")).data.books >= 0);
@@ -171,21 +172,20 @@ describe("sign-in, session cookie, CSRF and sign-out", () => {
     const app = await startApp();
     await app.login();
     const cookie = app.cookie;
-    assert.equal((await app.raw(`${P}/me`, { headers: { Cookie: cookie } })).status, 200);
+    assert.equal((await app.raw(`${P}/me`, { headers: { Cookie: cookie } })).data.authenticated, true);
     const out = await app.raw(`${P}/logout`, { method: "POST", headers: { Cookie: cookie, ...CSRF } });
     assert.equal(out.status, 204);
     assert.match(out.headers.get("set-cookie"), /^lib_session=; .*Max-Age=0/);
-    assert.equal((await app.raw(`${P}/me`, { headers: { Cookie: cookie } })).status, 404);
-    assert.equal((await app.raw("/api/export", { headers: { Cookie: cookie } })).status, 404);
+    assert.equal((await app.raw(`${P}/me`, { headers: { Cookie: cookie } })).data.authenticated, false);
+    assert.equal((await app.raw("/api/export", { headers: { Cookie: cookie } })).status, 401);
     await app.close();
   });
 
-  test("signed-in admin can upload, edit fields and post an update", async () => {
+  test("signed-in admin can upload and edit fields", async () => {
     const app = await startApp();
     assert.equal((await app.upload(sample("sample-books.csv"))).status, 200);
     assert.equal((await app.call("/api/fields/year", { method: "PATCH", body: { label: "Y" }, token: TOKEN })).status, 404, "unknown field");
     assert.equal((await app.call("/api/fields/title", { method: "PATCH", body: { label: "Book" }, token: TOKEN })).status, 200);
-    assert.equal((await app.call("/api/notices", { method: "POST", body: { title: "Hello" }, token: TOKEN })).status, 201);
     const me = await app.call(`${P}/me`, { token: TOKEN });
     assert.equal(me.data.authenticated, true);
     await app.close();
@@ -227,24 +227,23 @@ describe("configuration safety", () => {
     const base = { ...prod, ...ADMIN_ENV };
     assert.throws(() => loadConfig({ ...base, SESSION_SECRET: "x".repeat(31) }), /32 bytes/);
     assert.throws(() => loadConfig({ ...base, ADMIN_PASSWORD_HASH: "plaintext-password" }), /scrypt/);
-    assert.throws(() => loadConfig({ ...base, ADMIN_PATH: "admin" }), /ADMIN_PATH/);
-    assert.throws(() => loadConfig({ ...base, ADMIN_PATH: "short" }), /ADMIN_PATH/);
-    assert.throws(() => loadConfig({ ...base, ADMIN_PATH: "Has Spaces!!" }), /ADMIN_PATH/);
   });
 
   test("on Vercel with no admin settings at all: public-only, not a crash; partial settings still fail", () => {
     const vercel = { ...prod, VERCEL: "1" };
     const config = loadConfig(vercel);
     assert.equal(config.admin.enabled, false);
-    assert.ok(config.warnings.some((w) => /public-only/.test(w)));
+    assert.ok(config.warnings.some((w) => /sign-in is off/.test(w)));
     assert.throws(() => loadConfig({ ...vercel, ADMIN_USERNAME: "x" }), ConfigError);
     assert.equal(loadConfig({ ...vercel, ...ADMIN_ENV }).admin.enabled, true);
   });
 
-  test("ADMIN_DISABLED=true runs public-only: no admin routes at all", async () => {
+  test("ADMIN_DISABLED=true runs public-only: sign-in is refused, admin APIs stay closed", async () => {
     assert.doesNotThrow(() => loadConfig({ ...prod, ADMIN_DISABLED: "true" }));
     const app = await startApp({}, { ADMIN_DISABLED: "true" });
-    assert.equal((await app.login()).status, 404);
+    assert.equal((await app.login()).status, 503);
+    assert.equal((await app.raw("/api/export")).status, 401);
+    assert.equal((await app.raw("/api/config")).data.adminEnabled, false);
     assert.equal((await app.raw("/api/search?q=a")).status, 200);
     await app.close();
   });
@@ -253,7 +252,6 @@ describe("configuration safety", () => {
     const a = loadConfig({});
     const b = loadConfig({});
     assert.ok(a.admin.devPassword && a.admin.devPassword !== b.admin.devPassword);
-    assert.notEqual(a.admin.path, b.admin.path);
     assert.ok(a.warnings.some((w) => w.includes(a.admin.devPassword)), "printed once at start-up");
     assert.ok(!JSON.stringify(a).includes("dev-admin-token"));
   });

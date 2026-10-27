@@ -290,17 +290,17 @@ describe("admin protection and records", () => {
   after(() => app.close());
 
   test("admin endpoints need the token", async () => {
-    // Admin-only endpoints look like they don't exist: 404, not 401/403.
-    assert.equal((await app.upload(sample("sample-books.csv"), { token: "" })).status, 404);
-    assert.equal((await app.upload(sample("sample-books.csv"), { token: "wrong" })).status, 404);
-    assert.equal((await app.call("/api/books", { method: "POST", body: { title: "x" } })).status, 404);
-    assert.equal((await app.call("/api/fields/title", { method: "PATCH", body: {} })).status, 404);
-    assert.equal((await app.call("/api/export")).status, 404);
-    assert.equal((await app.call("/api/books?confirm=yes", { method: "DELETE" })).status, 404);
+    // Admin-only endpoints need a session: 401.
+    assert.equal((await app.upload(sample("sample-books.csv"), { token: "" })).status, 401);
+    assert.equal((await app.upload(sample("sample-books.csv"), { token: "wrong" })).status, 401);
+    assert.equal((await app.call("/api/books", { method: "POST", body: { title: "x" } })).status, 401);
+    assert.equal((await app.call("/api/fields/title", { method: "PATCH", body: {} })).status, 401);
+    assert.equal((await app.call("/api/export")).status, 401);
+    assert.equal((await app.call("/api/books?confirm=yes", { method: "DELETE" })).status, 401);
     const all = await app.call("/api/fields?all=true");
     assert.equal(all.status, 200, "?all=true is ignored for visitors");
     assert.ok(all.data.fields.every((f) => f.active));
-    assert.equal((await app.call(`/api/${"test-desk-7f3k9q"}/me`, { token: TOKEN })).status, 200);
+    assert.equal((await app.call("/api/auth/me", { token: TOKEN })).data.authenticated, true);
   });
 
   test("POST a book with a brand-new key registers the field", async () => {
@@ -356,13 +356,11 @@ describe("admin protection and records", () => {
     assert.equal((await app.call("/api/health")).data.books, 0);
   });
 
-  test("notices: public list, admin create/delete", async () => {
-    assert.equal((await app.call("/api/notices", { method: "POST", body: { title: "x" } })).status, 404);
-    const created = await app.call("/api/notices", { method: "POST", body: { title: "Closed Friday", body: "Holiday" }, token: TOKEN });
-    assert.equal(created.status, 201);
-    assert.equal((await app.call("/api/notices")).data[0].title, "Closed Friday");
-    assert.equal((await app.call(`/api/notices/${created.data.id}`, { method: "DELETE", token: TOKEN })).status, 204);
+  test("notices endpoints are gone", async () => {
+    assert.equal((await app.call("/api/notices")).status, 404);
+    assert.equal((await app.call("/api/notices", { method: "POST", body: { title: "x" }, token: TOKEN })).status, 404);
   });
+
 });
 
 describe("server behaviour", () => {

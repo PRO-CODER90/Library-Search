@@ -1,6 +1,6 @@
 // Generate admin credentials.
 //   npm run admin:hash              -> asks for a password, prints ADMIN_PASSWORD_HASH
-//   npm run admin:hash -- --generate -> also creates a random password, ADMIN_PATH
+//   npm run admin:hash -- --generate -> also creates a random password
 //                                       and SESSION_SECRET (prints them once)
 
 import { randomBytes } from "node:crypto";
@@ -39,7 +39,6 @@ const hash = await hashPassword(password);
 console.log("\nAdd these to your environment (e.g. Vercel → Settings → Environment Variables):\n");
 if (generate) {
   console.log(`ADMIN_USERNAME=librarian`);
-  console.log(`ADMIN_PATH=lib-desk-${randomBytes(6).toString("hex")}`);
   console.log(`SESSION_SECRET=${randomBytes(48).toString("base64url")}`);
 }
 console.log(`ADMIN_PASSWORD_HASH=${hash}`);

@@ -1,8 +1,8 @@
 // Admin authentication: username + scrypt-hashed password, then a signed
 // session in an HttpOnly; SameSite=Strict cookie (Secure in production).
 //
-// - Anything admin-only answers 404 to a request without a valid session,
-//   so the endpoints look like they don't exist (enforced in server.js).
+// - Anything admin-only answers 401 to a request without a valid session
+//   (enforced in server.js for every admin route).
 // - State-changing admin requests also need the X-Requested-With header (CSRF).
 // - Failed logins are rate limited per IP and slowed down; every error is generic.
 // - Sessions are stateless (HMAC-signed, 8 h) so they work across serverless
@@ -83,7 +83,6 @@ export function createAdminAuth({ admin, secureCookies, trustProxy, audit = () =
 
   return {
     enabled: true,
-    path: admin.path,
     cookieName,
     session,
 

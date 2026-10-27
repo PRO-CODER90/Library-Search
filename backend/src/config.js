@@ -1,9 +1,9 @@
 // Environment configuration.
 //
-// Admin access (all four are required in production; see README):
+// Admin access (all three are required in production; see README):
 //   ADMIN_USERNAME, ADMIN_PASSWORD_HASH (npm run admin:hash),
-//   ADMIN_PATH (the hidden admin URL, e.g. lib-desk-7f3k9q),
 //   SESSION_SECRET (at least 32 bytes).
+// The sign-in page is the public /login; the dashboard is /admin.
 // ADMIN_DISABLED=true runs a public-only site with no admin at all.
 
 import { randomBytes } from "node:crypto";
@@ -16,24 +16,20 @@ const projectDir = resolve(backendDir, "..");
 
 export class ConfigError extends Error {}
 
-const ADMIN_PATH_PATTERN = /^[a-z0-9][a-z0-9-]{7,63}$/;
-const RESERVED_PATHS = new Set(["admin", "api", "search", "book", "browse", "updates", "assets", "shared"]);
-
 function adminConfig(env, production, warnings) {
   if (env.ADMIN_DISABLED === "true") return { enabled: false };
 
   let username = env.ADMIN_USERNAME ?? "";
   let passwordHash = env.ADMIN_PASSWORD_HASH ?? "";
-  let path = (env.ADMIN_PATH ?? "").replace(/^\/+|\/+$/g, "");
   let sessionSecret = env.SESSION_SECRET ?? "";
   let devPassword = "";
 
   // On Vercel with no admin settings at all, run public-only rather than take the
   // public site down: no admin routes exist. A partial or weak setup still fails.
-  const anySet = [env.ADMIN_USERNAME, env.ADMIN_PASSWORD_HASH, env.ADMIN_PATH, env.SESSION_SECRET].some(Boolean);
+  const anySet = [env.ADMIN_USERNAME, env.ADMIN_PASSWORD_HASH, env.SESSION_SECRET].some(Boolean);
   if (production && env.VERCEL && !anySet) {
     warnings.push(
-      "No admin settings on Vercel: running public-only (no admin area). Set ADMIN_USERNAME, ADMIN_PASSWORD_HASH, ADMIN_PATH and SESSION_SECRET to enable it."
+      "No admin settings on Vercel: admin sign-in is off. Set ADMIN_USERNAME, ADMIN_PASSWORD_HASH and SESSION_SECRET to enable it."
     );
     return { enabled: false };
   }
@@ -42,7 +38,6 @@ function adminConfig(env, production, warnings) {
     const missing = [];
     if (!username) missing.push("ADMIN_USERNAME");
     if (!passwordHash) missing.push("ADMIN_PASSWORD_HASH");
-    if (!path) missing.push("ADMIN_PATH");
     if (!sessionSecret) missing.push("SESSION_SECRET");
     if (missing.length) {
       throw new ConfigError(
@@ -53,12 +48,11 @@ function adminConfig(env, production, warnings) {
   } else {
     // Development: never a fixed default. Generate fresh values and print them once.
     if (!username) username = "admin";
-    if (!path) path = `lib-desk-${randomBytes(4).toString("hex")}`;
     if (!sessionSecret) sessionSecret = randomBytes(48).toString("base64url");
     if (!passwordHash) {
       devPassword = randomBytes(12).toString("base64url");
       warnings.push(
-        `Development admin: open /${path} and sign in as "${username}" with password ${devPassword} (generated for this run only).`
+        `Development admin: open /login and sign in as "${username}" with password ${devPassword} (generated for this run only).`
       );
     }
   }
@@ -69,12 +63,7 @@ function adminConfig(env, production, warnings) {
   if (Buffer.byteLength(sessionSecret) < 32) {
     throw new ConfigError("SESSION_SECRET must be at least 32 bytes. Generate one with `npm run admin:hash -- --generate`.");
   }
-  if (!ADMIN_PATH_PATTERN.test(path) || RESERVED_PATHS.has(path)) {
-    throw new ConfigError(
-      "ADMIN_PATH must be 8–64 characters of lowercase letters, digits and hyphens, and not a public route (e.g. lib-desk-7f3k9q)."
-    );
-  }
-  return { enabled: true, username, passwordHash, devPassword, path, sessionSecret };
+  return { enabled: true, username, passwordHash, devPassword, sessionSecret };
 }
 
 export function loadConfig(env = process.env) {

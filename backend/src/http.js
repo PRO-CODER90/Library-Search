@@ -81,12 +81,10 @@ export function createRouter() {
     },
     match(method, path) {
       let pathMatched = false;
-      let publicPath = false; // does any non-admin route use this path?
       for (const route of routes) {
         const m = route.regex.exec(path);
         if (!m) continue;
         pathMatched = true;
-        if (!route.admin) publicPath = true;
         if (route.method !== method && !(method === "HEAD" && route.method === "GET")) continue;
         try {
           const params = Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
@@ -95,7 +93,7 @@ export function createRouter() {
           throw new HttpError(400, "Bad URL encoding.");
         }
       }
-      return pathMatched ? { methodNotAllowed: true, publicPath } : null;
+      return pathMatched ? { methodNotAllowed: true } : null;
     },
   };
 }

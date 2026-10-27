@@ -8,11 +8,10 @@ import { createApp } from "../src/server.js";
 import { hashPassword } from "../src/utils/password.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const ADMIN = { username: "librarian", password: "correct-horse-battery-1", path: "test-desk-7f3k9q" };
+export const ADMIN = { username: "librarian", password: "correct-horse-battery-1" };
 export const ADMIN_ENV = {
   ADMIN_USERNAME: ADMIN.username,
   ADMIN_PASSWORD_HASH: await hashPassword(ADMIN.password),
-  ADMIN_PATH: ADMIN.path,
   SESSION_SECRET: "s".repeat(48),
 };
 /** Pass `token: TOKEN` to a call to make it as the signed-in admin. */
@@ -55,7 +54,7 @@ export async function startApp(overrides = {}, env = {}) {
   }
 
   async function login({ username = ADMIN.username, password = ADMIN.password, headers = CSRF } = {}) {
-    const res = await raw(`/api/${ADMIN.path}/login`, { method: "POST", body: { username, password }, headers });
+    const res = await raw("/api/auth/login", { method: "POST", body: { username, password }, headers });
     const setCookie = res.headers.get("set-cookie");
     if (res.status === 200) sessionCookie = setCookie.split(";")[0];
     return { ...res, setCookie };

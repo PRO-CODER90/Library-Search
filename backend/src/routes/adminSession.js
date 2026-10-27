@@ -1,6 +1,5 @@
-// Admin sign-in, session check and sign-out, mounted under the hidden
-// /api/<ADMIN_PATH>/ prefix only. Without a session, /me and /logout answer
-// 404 like any unknown path.
+// Admin sign-in, session check and sign-out under /api/auth/. The Login
+// button is public; every admin API still checks the session on the server.
 
 import { HttpError, readJson } from "../http.js";
 import { CSRF_HEADER, CSRF_VALUE } from "../middleware/adminAuth.js";
@@ -8,10 +7,9 @@ import { CSRF_HEADER, CSRF_VALUE } from "../middleware/adminAuth.js";
 const GENERIC = "Sign-in failed. Check the username and password.";
 
 export function registerAdminSessionRoutes(router, { config, auth }) {
-  const base = `/api/${auth.path}`;
-
-  router.add("POST", `${base}/login`, async ({ req, res }) => {
+  router.add("POST", "/api/auth/login", async ({ req, res }) => {
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    if (!auth.enabled) throw new HttpError(503, "Admin sign-in is not set up on this server.");
     if (req.headers[CSRF_HEADER] !== CSRF_VALUE) throw new HttpError(403, "Forbidden.");
     const locked = auth.lockedOut(req);
     if (locked) {
@@ -35,22 +33,23 @@ export function registerAdminSessionRoutes(router, { config, auth }) {
     return { username: result.claims.u, expiresAt: result.claims.exp };
   });
 
-  router.add(
-    "GET",
-    `${base}/me`,
-    ({ session }) => ({
+  // Public: tells the header whether to show "Login" or the signed-in menu.
+  router.add("GET", "/api/auth/me", ({ req, res }) => {
+    res.setHeader("Cache-Control", "no-store");
+    const session = auth.session(req);
+    if (!session) return { authenticated: false };
+    return {
       authenticated: true,
       username: session.u,
       expiresAt: session.exp,
       temporaryStorage: Boolean(config.ephemeral),
       maxUploadMb: Math.round(config.maxUploadBytes / 1048576),
-    }),
-    { admin: true }
-  );
+    };
+  });
 
   router.add(
     "POST",
-    `${base}/logout`,
+    "/api/auth/logout",
     ({ req, res }) => {
       res.setHeader("Set-Cookie", auth.logout(req));
       return { status: 204 };
