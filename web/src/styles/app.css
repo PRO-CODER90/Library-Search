@@ -42,6 +42,13 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-height: 0;
+}
+/* Title chips take the space left above the wave and scroll inside it. */
+.shell-fit .suggest {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 .shell-fit .footer {
   font-size: 0.8rem;
@@ -306,7 +313,7 @@ code,
   grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);
   min-height: 520px;
   margin-top: -34px; /* tuck under the header wave */
-  padding-bottom: clamp(70px, 15vh, 150px);
+  padding-bottom: clamp(80px, 17vh, 180px); /* = wave height */
   overflow: hidden;
   background: var(--bg);
 }
@@ -567,6 +574,49 @@ kbd {
   to {
     background-position: -200% 0;
   }
+}
+
+/* ---------- live title chips ---------- */
+
+.suggest {
+  position: relative;
+  z-index: 3;
+  max-width: 890px;
+  max-height: min(34vh, 320px);
+  margin-top: clamp(0.6rem, 1.6vh, 1rem);
+  padding: 4px 4px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.suggest-chip {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 1px solid #eef0f6;
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: 0 3px 10px rgba(11, 31, 77, 0.08);
+  color: var(--navy-900);
+  font: 600 0.95rem var(--font-sans);
+  text-decoration: none;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+}
+.suggest-chip:hover,
+.suggest-chip:focus-visible {
+  border-color: var(--pink-500);
+  box-shadow: 0 6px 16px rgba(232, 52, 138, 0.18);
+  transform: translateY(-1px);
+}
+.suggest-empty {
+  margin: 0;
+  color: var(--ink-600);
 }
 
 /* ---------- sections ---------- */
@@ -1174,6 +1224,12 @@ kbd {
     flex: 1;
     min-height: 110px;
     height: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell-fit .hero:has(.suggest) .hero-photo {
+    display: none;
   }
 }
 

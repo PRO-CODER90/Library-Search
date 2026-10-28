@@ -1,14 +1,56 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, toQuery } from "../api.js";
 import { useDebounced, useDocumentTitle } from "../hooks.js";
-import { useSchema } from "../schema.jsx";
+import { titleOf, useSchema } from "../schema.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 
 const PAGE_SIZE = 20;
+const SUGGEST_LIMIT = 40;
 
-function Hero({ query, onQuery, onSubmit }) {
+/** Live title chips while typing; each opens its book. Enter shows full results. */
+function Suggestions({ q }) {
+  const { schema } = useSchema();
+  const [state, setState] = useState({ q: "", items: [] });
+
+  useEffect(() => {
+    if (!q) return undefined;
+    const controller = new AbortController();
+    api(`/api/search${toQuery({ q, limit: SUGGEST_LIMIT })}`, { signal: controller.signal })
+      .then((data) => setState({ q, items: data.results }))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [q]);
+
+  if (!q || !schema || state.q !== q) return null;
+  const seen = new Set();
+  const chips = state.items.filter((book) => {
+    const title = titleOf(book.data, schema).toLowerCase();
+    if (seen.has(title)) return false;
+    seen.add(title);
+    return true;
+  });
+  return (
+    <div className="suggest" aria-live="polite">
+      {chips.length ? (
+        <ul className="chips-list" aria-label="Matching titles">
+          {chips.map((book) => (
+            <li key={book.id}>
+              <Link className="suggest-chip" to={`/book/${book.id}`}>
+                {titleOf(book.data, schema)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="suggest-empty">No titles match “{q}”.</p>
+      )}
+    </div>
+  );
+}
+
+function Hero({ query, onQuery, onSubmit, suggest }) {
   return (
     <section className="hero">
       <img className="decor decor-botanical" src="/art/botanical-pink.png" width="140" height="320" alt="" aria-hidden="true" loading="lazy" />
@@ -25,6 +67,7 @@ function Hero({ query, onQuery, onSubmit }) {
         <p className="hero-sub">Search by title, author, subject or shelf code.</p>
         <p className="hero-hint">One letter is enough to get started.</p>
         <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} autoFocus />
+        <Suggestions q={suggest} />
       </div>
       <div className="hero-photo">
         <picture>
@@ -117,13 +160,6 @@ export default function Home() {
     setQuery((current) => (current.trim() === urlQuery ? current : urlQuery));
   }, [urlQuery]);
 
-  // Typing searches live: the URL is the source of truth for results.
-  useEffect(() => {
-    if (debounced === urlQuery) return;
-    navigate(debounced ? `/search${toQuery({ q: debounced })}` : "/", { replace: true });
-    // eslint-disable-next-line
-  }, [debounced]);
-
   const submit = (value) => {
     const q = value.trim();
     navigate(q ? `/search${toQuery({ q })}` : "/", { replace: true });
@@ -131,7 +167,7 @@ export default function Home() {
 
   return (
     <>
-      <Hero query={query} onQuery={setQuery} onSubmit={submit} />
+      <Hero query={query} onQuery={setQuery} onSubmit={submit} suggest={debounced === urlQuery ? "" : debounced} />
       {urlQuery && <Results q={urlQuery} />}
     </>
   );
