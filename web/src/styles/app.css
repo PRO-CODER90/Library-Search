@@ -586,13 +586,20 @@ kbd {
   padding: 8px 4px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Scrolls with wheel, touch and keys, but shows no bar; soft fades hint at more. */
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent);
-  mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent);
+  /* A slim pink scroller shows there is more and can be dragged. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink-500) var(--pink-100);
 }
 .suggest::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+}
+.suggest::-webkit-scrollbar-track {
+  border-radius: 8px;
+  background: var(--pink-100);
+}
+.suggest::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--pink-500);
 }
 .suggest-count {
   margin: clamp(0.5rem, 1.4vh, 0.9rem) 0 0;
