@@ -923,8 +923,8 @@ kbd {
   height: 30px;
   border-radius: 50%;
   background: var(--navy-900);
-  color: var(--pink-500);
-  font: 700 0.9rem var(--font-sans);
+  color: var(--pink-300);
+  font: 700 0.9rem/30px var(--font-sans);
   text-align: center;
 }
 .note {
@@ -994,7 +994,7 @@ kbd {
   border-bottom-color: var(--pink-500) !important;
 }
 .is-target .bookcase-books i {
-  background: #e6c98a;
+  background: #f59cc5;
 }
 .is-target .bookcase-books i:nth-child(5) {
   background: var(--navy-900);
