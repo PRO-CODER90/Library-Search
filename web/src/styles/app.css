@@ -585,8 +585,12 @@ kbd {
   max-height: min(34vh, 320px);
   margin-top: clamp(0.6rem, 1.6vh, 1rem);
   padding: 4px 4px 8px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden; /* chips that don't fit are hidden in JS, never scrolled */
+}
+.suggest-more {
+  margin: 4px 0 0;
+  color: var(--ink-600);
+  font: 600 0.9rem var(--font-sans);
 }
 .chips-list {
   display: flex;
@@ -642,6 +646,15 @@ kbd {
 .hero.is-searching .suggest,
 .hero.is-searching .hit-count {
   max-width: none;
+}
+/* Make room for chips: keep the headline, drop the helper lines. */
+.hero.is-searching .eyebrow,
+.hero.is-searching .hero-sub,
+.hero.is-searching .hero-hint {
+  display: none;
+}
+.hero.is-searching .hero-title {
+  margin-bottom: clamp(0.75rem, 2.4vh, 1.5rem);
 }
 
 /* ---------- sections ---------- */

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, toQuery } from "../api.js";
 import { useDebounced, useDocumentTitle } from "../hooks.js";
@@ -9,10 +9,42 @@ import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 const PAGE_SIZE = 20;
 const SUGGEST_LIMIT = 40;
 
+/**
+ * Hide the chips that don't fit in the box (never a scrollbar, never a cut-off
+ * chip) and return how many were hidden.
+ */
+function useFitChips(box, deps) {
+  const [hidden, setHidden] = useState(0);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return undefined;
+    function fit() {
+      const items = [...el.querySelectorAll("li")];
+      for (const li of items) li.hidden = false;
+      const limit = el.clientHeight;
+      let count = 0;
+      for (const li of items) {
+        if (li.offsetTop + li.offsetHeight > limit) {
+          li.hidden = true;
+          count++;
+        }
+      }
+      setHidden(count);
+    }
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line
+  }, deps);
+  return hidden;
+}
+
 /** Live title chips while typing; each opens its book. Enter shows full results. */
 function Suggestions({ q }) {
   const { schema } = useSchema();
   const [state, setState] = useState({ q: "", items: [] });
+  const box = useRef(null);
 
   useEffect(() => {
     if (!q) return undefined;
@@ -23,30 +55,42 @@ function Suggestions({ q }) {
     return () => controller.abort();
   }, [q]);
 
-  if (!q || !schema || state.q !== q) return null;
+  const ready = Boolean(q && schema && state.q === q);
   const seen = new Set();
-  const chips = state.items.filter((book) => {
-    const title = titleOf(book.data, schema).toLowerCase();
-    if (seen.has(title)) return false;
-    seen.add(title);
-    return true;
-  });
+  const chips = ready
+    ? state.items.filter((book) => {
+        const title = titleOf(book.data, schema).toLowerCase();
+        if (seen.has(title)) return false;
+        seen.add(title);
+        return true;
+      })
+    : [];
+  const hidden = useFitChips(box, [ready, state]);
+
+  if (!ready) return null;
   return (
-    <div className="suggest" aria-live="polite">
-      {chips.length ? (
-        <ul className="chips-list" aria-label="Matching titles">
-          {chips.map((book) => (
-            <li key={book.id}>
-              <Link className="suggest-chip" to={`/book/${book.id}`}>
-                {titleOf(book.data, schema)}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="suggest-empty">No titles match “{q}”.</p>
+    <>
+      <div className="suggest" ref={box} aria-live="polite">
+        {chips.length ? (
+          <ul className="chips-list" aria-label="Matching titles">
+            {chips.map((book) => (
+              <li key={book.id}>
+                <Link className="suggest-chip" to={`/book/${book.id}`}>
+                  {titleOf(book.data, schema)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="suggest-empty">No titles match “{q}”.</p>
+        )}
+      </div>
+      {hidden > 0 && (
+        <p className="suggest-more">
+          +{hidden} more · press Enter to see all
+        </p>
       )}
-    </div>
+    </>
   );
 }
 
