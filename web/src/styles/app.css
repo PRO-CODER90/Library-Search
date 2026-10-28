@@ -8,17 +8,47 @@
 html {
   -webkit-text-size-adjust: 100%;
 }
+html,
+body,
+#root {
+  height: 100%;
+}
 body {
   margin: 0;
-  min-height: 100vh;
   background: var(--bg);
   color: var(--ink-900);
   font: 17px/1.55 var(--font-serif);
 }
-#root {
-  min-height: 100vh;
+.shell {
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
+}
+/* The bare home page fits one screen: header + hero + slim footer. */
+.shell-fit {
+  height: 100dvh;
+  overflow: hidden;
+}
+.shell-fit main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.shell-fit .hero {
+  flex: 1;
+  min-height: 0;
+}
+.shell-fit .hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.shell-fit .footer {
+  font-size: 0.8rem;
+}
+.shell-fit .footer-inner {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 main {
   flex: 1;
@@ -119,7 +149,7 @@ code,
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 96px;
+  min-height: clamp(72px, 11vh, 104px);
 }
 .brand {
   display: flex;
@@ -130,8 +160,8 @@ code,
   min-width: 0;
 }
 .brand-logo {
-  width: 72px;
-  height: 72px;
+  width: clamp(48px, 8vh, 72px);
+  height: clamp(48px, 8vh, 72px);
   flex: none;
   border-radius: 50%;
   background: var(--white);
@@ -162,30 +192,6 @@ code,
   align-items: center;
   gap: 26px;
 }
-.nav-link {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  color: var(--white);
-  text-decoration: none;
-  font-size: 1.12rem;
-}
-.nav-link:hover,
-.nav-link.active {
-  color: var(--pink-300);
-}
-.nav-link.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--pink-500);
-}
 .login-pill {
   display: inline-flex;
   align-items: center;
@@ -205,6 +211,17 @@ code,
 .login-pill:hover {
   background: var(--pink-500);
 }
+.login-icon {
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  height: 48px;
+  padding: 0;
+}
+.login-pill:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: 3px;
+}
 .user-menu {
   position: relative;
 }
@@ -213,7 +230,6 @@ code,
   place-items: center;
   width: 30px;
   height: 30px;
-  margin-left: -12px;
   border-radius: 50%;
   background: var(--white);
   color: var(--pink-600);
@@ -288,22 +304,22 @@ code,
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);
-  min-height: 600px;
+  min-height: 520px;
   margin-top: -34px; /* tuck under the header wave */
-  padding-bottom: 150px;
+  padding-bottom: clamp(70px, 15vh, 150px);
   overflow: hidden;
   background: var(--bg);
 }
 .hero-copy {
   position: relative;
   z-index: 2;
-  padding: 72px 24px 20px max(24px, calc((100vw - 1280px) / 2 + 24px));
+  padding: clamp(1rem, 6vh, 72px) 24px 12px max(24px, calc((100vw - 1280px) / 2 + 24px));
 }
 .eyebrow {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 0 16px;
+  margin: 0 0 clamp(0.5rem, 1.8vh, 1rem);
   color: var(--navy-900);
   font: 600 0.8rem var(--font-sans);
   letter-spacing: 0.22em;
@@ -327,7 +343,7 @@ code,
 .hero-title {
   margin: 0;
   color: var(--navy-900);
-  font-size: clamp(2.6rem, 5.2vw, 4.6rem);
+  font-size: clamp(2rem, min(5.2vh + 1rem, 5.4vw), 4.5rem);
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.02em;
@@ -340,15 +356,15 @@ code,
   font-style: italic;
 }
 .hero-sub {
-  margin: 20px 0 2px;
+  margin: clamp(0.75rem, 2.2vh, 1.25rem) 0 2px;
   color: var(--navy-900);
-  font-size: 1.4rem;
+  font-size: clamp(1.05rem, 1.2vh + 0.7rem, 1.4rem);
   font-weight: 600;
 }
 .hero-hint {
-  margin: 0 0 24px;
+  margin: 0 0 clamp(0.75rem, 2.6vh, 1.5rem);
   color: var(--ink-600);
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 0.8vh + 0.7rem, 1.15rem);
 }
 .decor {
   position: absolute;
@@ -437,7 +453,7 @@ code,
   bottom: 0;
   z-index: 2;
   width: 100%;
-  height: 180px;
+  height: clamp(80px, 17vh, 180px);
 }
 .wave-navy {
   fill: var(--navy-900);
@@ -456,7 +472,7 @@ code,
   display: flex;
   align-items: center;
   max-width: 890px;
-  min-height: 70px;
+  min-height: clamp(54px, 7.5vh, 70px);
   background: var(--white);
   border: 2px solid var(--navy-900);
   border-radius: 14px;
@@ -472,7 +488,7 @@ code,
 .searchbar input {
   flex: 1;
   min-width: 0;
-  height: 66px;
+  height: clamp(50px, 7vh, 66px);
   padding: 0 14px;
   border: 0;
   background: transparent;
@@ -530,44 +546,6 @@ kbd {
   background: var(--pink-500);
 }
 
-/* ---------- stats ---------- */
-
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  row-gap: 12px;
-  gap: 0;
-  margin: 28px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.stats li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 4px 28px 4px 0;
-  color: var(--navy-900);
-}
-.stats .icon {
-  box-sizing: content-box;
-  padding: 14px;
-  border-radius: 50%;
-  background: var(--pink-100);
-  color: var(--navy-700);
-}
-.stats li + li {
-  border-left: 1px solid var(--line);
-  padding-left: 28px;
-}
-.stats strong {
-  display: block;
-  font-size: 1.9rem;
-  line-height: 1;
-}
-.stats li span span {
-  color: var(--ink-600);
-  font-size: 1rem;
-}
 .shimmer,
 .skeleton span {
   display: inline-block;
@@ -1175,7 +1153,7 @@ kbd {
     display: none;
   }
   .hero-copy {
-    padding: 48px 20px 24px;
+    padding: clamp(1rem, 4vh, 48px) 20px 16px;
   }
   .decor-botanical {
     width: 60px;
@@ -1184,6 +1162,43 @@ kbd {
   }
   .hero-wave {
     height: 80px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell-fit .hero {
+    display: flex;
+    flex-direction: column;
+  }
+  .shell-fit .hero-photo {
+    flex: 1;
+    min-height: 110px;
+    height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell-fit .footer p:first-child {
+    display: none;
+  }
+}
+
+@media (max-height: 640px) {
+  .decor-campus,
+  .decor-botanical,
+  .decor-cricket {
+    display: none;
+  }
+}
+
+/* Too short to fit (phones in landscape): let the home page scroll. */
+@media (max-height: 520px) {
+  .shell-fit {
+    height: auto;
+    overflow: visible;
+  }
+  .shell-fit .hero-photo {
+    min-height: 200px;
   }
 }
 
@@ -1215,17 +1230,6 @@ kbd {
   }
   .topnav {
     gap: 12px;
-  }
-  .nav-link {
-    font-size: 1rem;
-  }
-  .nav-link span,
-  .login-pill .login-label {
-    display: none;
-  }
-  .login-pill {
-    min-height: 40px;
-    padding: 0 14px;
   }
   .partner {
     padding-left: 10px;
@@ -1261,14 +1265,6 @@ kbd {
   }
   .searchbar-go {
     width: 50px;
-  }
-  .stats li,
-  .stats li + li {
-    padding: 4px 18px 4px 0;
-    border-left: 0;
-  }
-  .stats strong {
-    font-size: 1.5rem;
   }
   .result-link {
     flex-direction: column;

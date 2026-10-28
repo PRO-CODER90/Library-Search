@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useApi } from "../hooks.js";
 import { useAuth } from "../auth.jsx";
 import { Icon } from "./Icon.jsx";
@@ -26,12 +26,10 @@ function UserMenu({ me, signOut }) {
 
   return (
     <div className="user-menu" ref={box}>
-      <button type="button" className="login-pill" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="login-pill login-icon" title={me.username} aria-label={`Signed in as ${me.username}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <span className="avatar" aria-hidden="true">
           {me.username.slice(0, 1).toUpperCase()}
         </span>
-        <span className="login-label">{me.username}</span>
-        <Icon name="chevron-down" size={18} />
       </button>
       {open && (
         <ul className="menu" role="menu">
@@ -76,16 +74,17 @@ export default function Header() {
             </span>
           </Link>
           <nav className="topnav" aria-label="Main">
-            <NavLink className="nav-link" to="/" end>
-              <Icon name="home" size={22} />
-              <span>Home</span>
-            </NavLink>
             {me ? (
               <UserMenu me={me} signOut={signOut} />
             ) : (
-              <Link className="login-pill" to="/login" state={{ from: location.pathname === "/login" ? undefined : location }}>
-                <Icon name="user" size={20} />
-                <span className="login-label">Login</span>
+              <Link
+                className="login-pill login-icon"
+                to="/login"
+                aria-label="Login"
+                title="Login"
+                state={{ from: location.pathname === "/login" ? undefined : location }}
+              >
+                <Icon name="user" size={22} />
               </Link>
             )}
             <span className="partner">

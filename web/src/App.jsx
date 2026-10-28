@@ -29,27 +29,31 @@ function AdminRoute() {
 }
 
 export default function App() {
+  // The bare home page fits one screen; search results and other pages scroll.
+  const { pathname } = useLocation();
   return (
     <AuthProvider>
       <SchemaProvider>
-        <a className="skip-link" href="#main">
-          Skip to content
-        </a>
-        <Header />
-        <main id="main" tabIndex={-1}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<Home />} />
-            <Route path="/book/:id" element={<Book />} />
-            {/* Browse is no longer linked from the header; kept for old links. */}
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/browse/:field/:value" element={<Browse />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin/*" element={<AdminRoute />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        <Footer />
+        <div className={pathname === "/" ? "shell shell-fit" : "shell"}>
+          <a className="skip-link" href="#main">
+            Skip to content
+          </a>
+          <Header />
+          <main id="main" tabIndex={-1}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/search" element={<Home />} />
+              <Route path="/book/:id" element={<Book />} />
+              {/* Browse is no longer linked from the header; kept for old links. */}
+              <Route path="/browse" element={<Browse />} />
+              <Route path="/browse/:field/:value" element={<Browse />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin/*" element={<AdminRoute />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
       </SchemaProvider>
     </AuthProvider>
   );

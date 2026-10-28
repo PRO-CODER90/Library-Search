@@ -1,35 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, toQuery } from "../api.js";
-import { useApi, useDebounced, useDocumentTitle } from "../hooks.js";
+import { useDebounced, useDocumentTitle } from "../hooks.js";
 import { useSchema } from "../schema.jsx";
 import SearchBar from "../components/SearchBar.jsx";
-import { Icon } from "../components/Icon.jsx";
 import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 
 const PAGE_SIZE = 20;
-
-function StatsRow() {
-  const { data, loading } = useApi("/api/stats");
-  const items = [
-    ["book-open", data?.books, "Books"],
-    ["database", data?.categories, "Categories"],
-    ["users", data?.available, "Available now"],
-  ].filter(([, value]) => loading || (value !== null && value !== undefined));
-  return (
-    <ul className="stats" aria-live="polite">
-      {items.map(([icon, value, label]) => (
-        <li key={label}>
-          <Icon name={icon} size={34} />
-          <span>
-            <strong>{loading ? <span className="shimmer">00</span> : value.toLocaleString()}</strong>
-            <span>{label}</span>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function Hero({ query, onQuery, onSubmit }) {
   return (
@@ -48,7 +25,6 @@ function Hero({ query, onQuery, onSubmit }) {
         <p className="hero-sub">Search by title, author, subject or shelf code.</p>
         <p className="hero-hint">One letter is enough to get started.</p>
         <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} autoFocus />
-        <StatsRow />
       </div>
       <div className="hero-photo">
         <picture>

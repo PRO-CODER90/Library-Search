@@ -35,12 +35,6 @@ const PATHS = {
     </>
   ),
   x: <path d="M6 6l12 12M18 6 6 18" />,
-  home: (
-    <>
-      <path d="M3 11 12 3l9 8" />
-      <path d="M5 9.5V21h5v-6h4v6h5V9.5" />
-    </>
-  ),
   user: (
     <>
       <circle cx="12" cy="8" r="4" />
@@ -62,7 +56,6 @@ const PATHS = {
       <rect x="3" y="16" width="7" height="5" rx="1" />
     </>
   ),
-  "chevron-down": <path d="m6 9 6 6 6-6" />,
   upload: (
     <>
       <path d="M12 16V4" />
