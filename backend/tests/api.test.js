@@ -356,6 +356,13 @@ describe("admin protection and records", () => {
     assert.equal((await app.call("/api/health")).data.books, 0);
   });
 
+  test("hit counter: POST counts a visit, GET reads it", async () => {
+    const start = (await app.call("/api/hits")).data.hits;
+    assert.equal((await app.call("/api/hits", { method: "POST" })).data.hits, start + 1);
+    assert.equal((await app.call("/api/hits", { method: "POST" })).data.hits, start + 2);
+    assert.equal((await app.call("/api/hits")).data.hits, start + 2);
+  });
+
   test("notices endpoints are gone", async () => {
     assert.equal((await app.call("/api/notices")).status, 404);
     assert.equal((await app.call("/api/notices", { method: "POST", body: { title: "x" }, token: TOKEN })).status, 404);

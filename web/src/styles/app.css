@@ -619,6 +619,31 @@ kbd {
   color: var(--ink-600);
 }
 
+.hit-count {
+  max-width: 890px;
+  margin: clamp(0.5rem, 1.6vh, 1rem) 0 0;
+  color: var(--navy-900);
+  font: 600 clamp(1rem, 0.6vh + 0.8rem, 1.2rem) var(--font-sans);
+  text-align: center;
+}
+
+/* While typing: the photo steps aside and the chips use the full width. */
+.hero.is-searching {
+  grid-template-columns: minmax(0, 1fr);
+}
+.hero.is-searching .hero-photo,
+.hero.is-searching .decor-campus,
+.hero.is-searching .decor-cricket {
+  display: none;
+}
+.hero.is-searching .hero-copy {
+  padding-right: max(24px, calc((100vw - 1280px) / 2 + 24px));
+}
+.hero.is-searching .suggest,
+.hero.is-searching .hit-count {
+  max-width: none;
+}
+
 /* ---------- sections ---------- */
 
 .section {
@@ -1224,12 +1249,6 @@ kbd {
     flex: 1;
     min-height: 110px;
     height: auto;
-  }
-}
-
-@media (max-width: 900px) {
-  .shell-fit .hero:has(.suggest) .hero-photo {
-    display: none;
   }
 }
 

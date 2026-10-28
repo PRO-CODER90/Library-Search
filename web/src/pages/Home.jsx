@@ -50,9 +50,32 @@ function Suggestions({ q }) {
   );
 }
 
+/** "Hit count": counts one visit per browser session, then just reads. */
+function HitCount() {
+  const [hits, setHits] = useState(null);
+  useEffect(() => {
+    let counted = false;
+    try {
+      counted = sessionStorage.getItem("counted") === "1";
+      sessionStorage.setItem("counted", "1");
+    } catch {
+      /* storage blocked: count this view */
+    }
+    api("/api/hits", counted ? {} : { method: "POST" })
+      .then((data) => setHits(data.hits))
+      .catch(() => {});
+  }, []);
+  if (hits === null) return null;
+  return (
+    <p className="hit-count">
+      Hit count : <strong>{hits.toLocaleString("en-IN")}</strong>
+    </p>
+  );
+}
+
 function Hero({ query, onQuery, onSubmit, suggest }) {
   return (
-    <section className="hero">
+    <section className={suggest ? "hero is-searching" : "hero"}>
       <img className="decor decor-botanical" src="/art/botanical-pink.png" width="140" height="320" alt="" aria-hidden="true" loading="lazy" />
       <div className="hero-copy">
         <img className="decor decor-campus" src="/art/campus-sketch-pink.png" width="472" height="238" alt="" aria-hidden="true" loading="lazy" />
@@ -68,6 +91,7 @@ function Hero({ query, onQuery, onSubmit, suggest }) {
         <p className="hero-hint">One letter is enough to get started.</p>
         <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} autoFocus />
         <Suggestions q={suggest} />
+        <HitCount />
       </div>
       <div className="hero-photo">
         <picture>
