@@ -206,13 +206,25 @@ function Results({ q }) {
   );
 }
 
+const LAST_QUERY = "lastQuery";
+
+/** After a page refresh, the search typed in this tab (if the URL lost it). */
+function queryBeforeReload() {
+  try {
+    const nav = performance.getEntriesByType?.("navigation")?.[0];
+    return nav?.type === "reload" ? sessionStorage.getItem(LAST_QUERY) ?? "" : "";
+  } catch {
+    return "";
+  }
+}
+
 export default function Home() {
   const [params] = useSearchParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const urlQuery = params.get("q") ?? "";
   const resultsPage = pathname === "/search"; // old "all results" links still work
-  const [query, setQuery] = useState(urlQuery);
+  const [query, setQuery] = useState(() => urlQuery || (resultsPage ? "" : queryBeforeReload()));
   const debounced = useDebounced(query.trim(), 150);
   const typed = resultsPage && debounced === urlQuery ? "" : debounced;
   const result = useSuggest(typed);
@@ -224,12 +236,19 @@ export default function Home() {
     setQuery((current) => (current.trim() === urlQuery ? current : urlQuery));
   }, [urlQuery]);
 
-  // The query lives in the URL (/?q=…) so Back from a book returns to the same chips.
+  // The query lives in the URL (/?q=…) as you type, so a refresh or Back from
+  // a book keeps it; it is also kept for this tab in case the URL lost it.
   useEffect(() => {
-    if (debounced === urlQuery) return;
-    navigate(debounced ? `/${toQuery({ q: debounced })}` : "/", { replace: true });
+    const q = query.trim();
+    try {
+      sessionStorage.setItem(LAST_QUERY, q);
+    } catch {
+      /* storage blocked: the URL still has it */
+    }
+    if (q === urlQuery) return;
+    navigate(q ? `/${toQuery({ q })}` : "/", { replace: true });
     // eslint-disable-next-line
-  }, [debounced]);
+  }, [query]);
 
   useEffect(() => setActive(0), [result]);
 
