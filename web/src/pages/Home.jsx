@@ -206,25 +206,24 @@ function Results({ q }) {
   );
 }
 
-const LAST_QUERY = "lastQuery";
-
-/** After a page refresh, the search typed in this tab (if the URL lost it). */
-function queryBeforeReload() {
-  try {
-    const nav = performance.getEntriesByType?.("navigation")?.[0];
-    return nav?.type === "reload" ? sessionStorage.getItem(LAST_QUERY) ?? "" : "";
-  } catch {
-    return "";
-  }
+// A page refresh starts with an empty search box: drop ?q= before the router
+// reads the URL. Back from a book (same page load) still returns to the query.
+try {
+  const reload = performance.getEntriesByType?.("navigation")?.[0]?.type === "reload";
+  if (reload && location.pathname === "/" && location.search) history.replaceState(history.state, "", "/");
+} catch {
+  /* no Navigation Timing: keep the URL as is */
 }
+
+const resultsPageOf = (pathname) => pathname === "/search";
 
 export default function Home() {
   const [params] = useSearchParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const urlQuery = params.get("q") ?? "";
-  const resultsPage = pathname === "/search"; // old "all results" links still work
-  const [query, setQuery] = useState(() => urlQuery || (resultsPage ? "" : queryBeforeReload()));
+  const resultsPage = resultsPageOf(pathname); // old "all results" links still work
+  const [query, setQuery] = useState(urlQuery);
   const debounced = useDebounced(query.trim(), 150);
   const typed = resultsPage && debounced === urlQuery ? "" : debounced;
   const result = useSuggest(typed);
@@ -236,15 +235,9 @@ export default function Home() {
     setQuery((current) => (current.trim() === urlQuery ? current : urlQuery));
   }, [urlQuery]);
 
-  // The query lives in the URL (/?q=…) as you type, so a refresh or Back from
-  // a book keeps it; it is also kept for this tab in case the URL lost it.
+  // The query lives in the URL (/?q=…) as you type, so Back from a book keeps it.
   useEffect(() => {
     const q = query.trim();
-    try {
-      sessionStorage.setItem(LAST_QUERY, q);
-    } catch {
-      /* storage blocked: the URL still has it */
-    }
     if (q === urlQuery) return;
     navigate(q ? `/${toQuery({ q })}` : "/", { replace: true });
     // eslint-disable-next-line
