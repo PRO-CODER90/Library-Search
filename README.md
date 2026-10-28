@@ -11,11 +11,23 @@ Poornima University Central Library: search any book and see exactly which **flo
 ```bash
 npm run build      # installs and builds the React app into web/dist
 npm start          # http://localhost:5000 (serves the API and web/dist)
-npm test           # 70 backend tests
+npm test           # backend tests
 npm run dev & npm run dev:web   # API on :5000, Vite dev server with /api proxy
 ```
 
 Node 22.13+ required. In development the server prints a one-off admin password for `/login`.
+
+## Install on a library PC (localhost)
+
+The database is **SQLite, built into Node.js** — nothing else to install, no database server, no password.
+All data (books, fields, hit count) is one file: `data/library.db`, created on first start.
+
+1. Install Node.js 22.13+ and run `npm run build` once.
+2. `npm run admin:hash -- --generate`, then copy `.env.example` to `.env` and paste the printed `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` into it.
+3. `npm start`, open http://localhost:5000, click **Login** and upload the Excel catalogue.
+
+Backup: stop the server and copy `data/library.db` (restore by copying it back). Leave the Upstash settings empty on a library PC.
+To let other PCs on the library network use it, open `http://<this-PC-IP>:5000` (allow port 5000 in the firewall).
 
 ## Features
 

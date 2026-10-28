@@ -101,7 +101,8 @@ export function loadConfig(env = process.env) {
     port: Number(env.PORT) || 5000,
     libraryName: env.LIBRARY_NAME || "Central Library",
     admin,
-    secureCookies: production,
+    // Secure cookies need HTTPS; a library PC served over plain http sets SECURE_COOKIES=false.
+    secureCookies: env.SECURE_COOKIES === undefined ? production : env.SECURE_COOKIES === "true",
     dbPath: ephemeral ? "/tmp/library.db" : resolve(projectDir, env.DB_PATH || "data/library.db"),
     ephemeral,
     upstash,

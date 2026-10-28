@@ -2,7 +2,7 @@
 // frontend into one node:http handler. Run directly to start the server.
 
 import { createServer } from "node:http";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ConfigError, loadConfig } from "./config.js";
 import { openDatabase } from "./db.js";
@@ -112,6 +112,9 @@ export function loadSampleIfEmpty(db, config) {
 }
 
 function main() {
+  // Settings from .env in the project folder, if there is one (library PC install).
+  const envFile = fileURLToPath(new URL("../../.env", import.meta.url));
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
   let config;
   try {
     config = loadConfig();
