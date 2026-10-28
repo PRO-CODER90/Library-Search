@@ -4,7 +4,7 @@ import { Icon } from "./Icon.jsx";
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
 /** Big search box. Ctrl/⌘+K focuses it from anywhere; Esc clears, then blurs. */
-export default function SearchBar({ value, onChange, onSubmit, autoFocus = false }) {
+export default function SearchBar({ value, onChange, onSubmit, onKeyDown, inputProps, autoFocus = false }) {
   const input = useRef(null);
 
   useEffect(() => {
@@ -46,7 +46,9 @@ export default function SearchBar({ value, onChange, onSubmit, autoFocus = false
         placeholder="Search title, author, subject or shelf code…"
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        {...inputProps}
         onKeyDown={(event) => {
+          onKeyDown?.(event);
           if (event.key !== "Escape") return;
           if (value) onChange("");
           else event.currentTarget.blur();

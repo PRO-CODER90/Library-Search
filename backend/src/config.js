@@ -78,6 +78,16 @@ export function loadConfig(env = process.env) {
   if (ephemeral) {
     warnings.push("Running on Vercel without persistent storage: uploads and edits are temporary.");
   }
+  // Persistent visit counter (Upstash Redis REST). Server-side only.
+  const upstash =
+    env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+      ? { url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN }
+      : null;
+  if (ephemeral && !upstash) {
+    warnings.push(
+      "ERROR: hit counter has no persistent store, so /api/visit answers 503. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN (Vercel → Storage → Upstash Redis)."
+    );
+  }
   const autoLoad =
     env.AUTO_LOAD_SAMPLE === undefined ? !production || ephemeral : env.AUTO_LOAD_SAMPLE === "true";
   // Vercel rejects function request bodies over 4.5 MB.
@@ -94,6 +104,7 @@ export function loadConfig(env = process.env) {
     secureCookies: production,
     dbPath: ephemeral ? "/tmp/library.db" : resolve(projectDir, env.DB_PATH || "data/library.db"),
     ephemeral,
+    upstash,
     maxUploadBytes: (Number(env.MAX_UPLOAD_MB) || defaultUploadMb) * 1024 * 1024,
     corsOrigin: env.CORS_ORIGIN || "",
     autoLoadSample: autoLoad,

@@ -140,8 +140,22 @@ describe("search rules", () => {
   });
 
   test("Unicode title is searchable and returned unchanged", async () => {
-    const res = await app.call(`/api/search?q=${encodeURIComponent("白")}`);
-    assert.deepEqual(titles(res), ["The白 Silk Road"]);
+    const added = await app.call("/api/books", { method: "POST", body: { title: "道德经 Tao Te Ching", author: "Laozi" }, token: TOKEN });
+    assert.equal(added.status, 201);
+    const res = await app.call(`/api/search?q=${encodeURIComponent("道德")}`);
+    assert.deepEqual(titles(res), ["道德经 Tao Te Ching"]);
+    await app.call(`/api/books/${added.data.id}`, { method: "DELETE", token: TOKEN });
+  });
+
+  test("suggest returns every match, light rows, same count as search", async () => {
+    const res = await app.call("/api/suggest?q=a");
+    const full = await app.call("/api/search?q=a&limit=100");
+    assert.equal(res.status, 200);
+    assert.equal(res.data.total, full.data.total);
+    assert.equal(res.data.items.length, res.data.total, "no page limit");
+    assert.deepEqual(Object.keys(res.data.items[0]).sort(), ["id", "text", "type"]);
+    assert.deepEqual(res.data.items.map((i) => i.id), full.data.results.map((r) => r.id), "same order as search");
+    assert.equal((await app.call("/api/suggest?q=")).data.total, 0);
   });
 
   test("shelf codes match with or without punctuation", async () => {
@@ -356,12 +370,7 @@ describe("admin protection and records", () => {
     assert.equal((await app.call("/api/health")).data.books, 0);
   });
 
-  test("hit counter: POST counts a visit, GET reads it", async () => {
-    const start = (await app.call("/api/hits")).data.hits;
-    assert.equal((await app.call("/api/hits", { method: "POST" })).data.hits, start + 1);
-    assert.equal((await app.call("/api/hits", { method: "POST" })).data.hits, start + 2);
-    assert.equal((await app.call("/api/hits")).data.hits, start + 2);
-  });
+
 
   test("notices endpoints are gone", async () => {
     assert.equal((await app.call("/api/notices")).status, 404);

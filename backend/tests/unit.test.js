@@ -4,6 +4,7 @@ import { detectDelimiter, parseRows, readCsv } from "../src/services/csvImport.j
 import { detectType, headerKeys, toKey } from "../src/services/columnMapper.js";
 import { sanitizeCell, csvCell } from "../src/utils/sanitize.js";
 import { parseMultipart } from "../src/utils/multipart.js";
+import { mixedScripts } from "../src/services/library.js";
 import { compactVariant, highlightSegments, normalize } from "../../shared/search.js";
 
 test("header normalization (spec 5.3)", () => {
@@ -73,4 +74,11 @@ test("shared text helpers", () => {
   assert.equal(compactVariant("r-07 shelf 005.1"), "r07 0051");
   assert.equal(compactVariant("philosopher's stone"), "philosophers");
   assert.deepEqual(highlightSegments("Café Society", "cafe").filter((s) => s.match).map((s) => s.text), ["Café"]);
+});
+
+test("mixedScripts flags a stray character from another script", () => {
+  assert.equal(mixedScripts("The白 Silk Road"), true);
+  assert.equal(mixedScripts("The Silk Road"), false);
+  assert.equal(mixedScripts("Café: Ünïcode — 2nd ed."), false);
+  assert.equal(mixedScripts("道德经"), false);
 });

@@ -1,125 +1,116 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { api, toQuery } from "../api.js";
 import { useDebounced, useDocumentTitle } from "../hooks.js";
-import { titleOf, useSchema } from "../schema.jsx";
+import { useSchema } from "../schema.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 
 const PAGE_SIZE = 20;
-const SUGGEST_LIMIT = 40;
+const BATCH = 200; // chips rendered at a time; more appear as the box scrolls
 
-/**
- * Hide the chips that don't fit in the box (never a scrollbar, never a cut-off
- * chip) and return how many were hidden.
- */
-function useFitChips(box, deps) {
-  const [hidden, setHidden] = useState(0);
-  useLayoutEffect(() => {
-    const el = box.current;
-    if (!el) return undefined;
-    function fit() {
-      const items = [...el.querySelectorAll("li")];
-      for (const li of items) li.hidden = false;
-      const limit = el.clientHeight;
-      let count = 0;
-      for (const li of items) {
-        if (li.offsetTop + li.offsetHeight > limit) {
-          li.hidden = true;
-          count++;
-        }
-      }
-      setHidden(count);
-    }
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(el);
-    return () => observer.disconnect();
-    // eslint-disable-next-line
-  }, deps);
-  return hidden;
-}
-
-/** Live title chips while typing; each opens its book. Enter shows full results. */
-function Suggestions({ q }) {
-  const { schema } = useSchema();
-  const [state, setState] = useState({ q: "", items: [] });
-  const box = useRef(null);
-
+/** Every title matching `q` (one light request), or null while loading. */
+function useSuggest(q) {
+  const [state, setState] = useState({ q: "", total: 0, items: [] });
   useEffect(() => {
     if (!q) return undefined;
     const controller = new AbortController();
-    api(`/api/search${toQuery({ q, limit: SUGGEST_LIMIT })}`, { signal: controller.signal })
-      .then((data) => setState({ q, items: data.results }))
+    api(`/api/suggest${toQuery({ q })}`, { signal: controller.signal })
+      .then((data) => setState({ q, total: data.total, items: data.items }))
       .catch(() => {});
     return () => controller.abort();
   }, [q]);
+  return q && state.q === q ? state : null;
+}
 
-  const ready = Boolean(q && schema && state.q === q);
-  const seen = new Set();
-  const chips = ready
-    ? state.items.filter((book) => {
-        const title = titleOf(book.data, schema).toLowerCase();
-        if (seen.has(title)) return false;
-        seen.add(title);
-        return true;
-      })
-    : [];
-  const hidden = useFitChips(box, [ready, state]);
+/** Live title chips: all matches, scrolling inside their own box (no visible bar). */
+function Suggestions({ q, result, active, onActive }) {
+  const box = useRef(null);
+  const sentinel = useRef(null);
+  const [shown, setShown] = useState(BATCH);
 
-  if (!ready) return null;
+  useEffect(() => setShown(BATCH), [result]);
+  useEffect(() => {
+    if (active >= shown) setShown(Math.ceil((active + 1) / BATCH) * BATCH);
+  }, [active, shown]);
+
+  // Render the next batch when the end of the list scrolls into view.
+  useEffect(() => {
+    const end = sentinel.current;
+    if (!end || !box.current) return undefined;
+    const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && setShown((n) => n + BATCH), {
+      root: box.current,
+      rootMargin: "200px",
+    });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [result, shown]);
+
+  // Keep the highlighted chip visible inside the box.
+  useEffect(() => {
+    box.current?.querySelector(".is-active")?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
+  if (!result) return null;
+  const { total, items } = result;
   return (
     <>
-      <div className="suggest" ref={box} aria-live="polite">
-        {chips.length ? (
-          <ul className="chips-list" aria-label="Matching titles">
-            {chips.map((book) => (
-              <li key={book.id}>
-                <Link className="suggest-chip" to={`/book/${book.id}`}>
-                  {titleOf(book.data, schema)}
+      <p className="suggest-count" aria-live="polite">
+        {total ? `${total.toLocaleString("en-IN")} ${total === 1 ? "result" : "results"}` : `No titles match “${q}”.`}
+      </p>
+      {total > 0 && (
+        <div className="suggest" ref={box}>
+          <ul className="chips-list" id="title-chips" role="listbox" aria-label="Matching titles">
+            {items.slice(0, shown).map((item, i) => (
+              <li key={item.id} role="none">
+                <Link
+                  id={`chip-${item.id}`}
+                  role="option"
+                  aria-selected={i === active}
+                  className={i === active ? "suggest-chip is-active" : "suggest-chip"}
+                  to={`/book/${item.id}`}
+                  onMouseEnter={() => onActive(i)}
+                >
+                  {item.text}
                 </Link>
               </li>
             ))}
+            {shown < items.length && <li ref={sentinel} className="chips-sentinel" aria-hidden="true" />}
           </ul>
-        ) : (
-          <p className="suggest-empty">No titles match “{q}”.</p>
-        )}
-      </div>
-      {hidden > 0 && (
-        <p className="suggest-more">
-          +{hidden} more · press Enter to see all
-        </p>
+        </div>
       )}
     </>
   );
 }
 
-/** "Hit count": counts one visit per browser session, then just reads. */
+// One count per full page load, even if React mounts the component twice.
+let visit = null;
+
+/** "Hit count": the number always comes from the server; "—" if it can't be read. */
 function HitCount() {
-  const [hits, setHits] = useState(null);
+  const [total, setTotal] = useState(undefined); // undefined = loading, null = failed
   useEffect(() => {
-    let counted = false;
-    try {
-      counted = sessionStorage.getItem("counted") === "1";
-      sessionStorage.setItem("counted", "1");
-    } catch {
-      /* storage blocked: count this view */
-    }
-    api("/api/hits", counted ? {} : { method: "POST" })
-      .then((data) => setHits(data.hits))
-      .catch(() => {});
+    visit ??= api("/api/visit", { method: "POST" }).then((data) => data.total);
+    let alive = true;
+    visit.then(
+      (n) => alive && setTotal(n),
+      () => alive && setTotal(null)
+    );
+    return () => {
+      alive = false;
+    };
   }, []);
-  if (hits === null) return null;
   return (
     <p className="hit-count">
-      Hit count : <strong>{hits.toLocaleString("en-IN")}</strong>
+      Hit count :{" "}
+      {total === undefined ? <span className="shimmer">0,000</span> : <strong>{total === null ? "—" : total.toLocaleString("en-IN")}</strong>}
     </p>
   );
 }
 
-function Hero({ query, onQuery, onSubmit, suggest }) {
+function Hero({ query, onQuery, onSubmit, onKeyDown, inputProps, searching, children }) {
   return (
-    <section className={suggest ? "hero is-searching" : "hero"}>
+    <section className={searching ? "hero is-searching" : "hero"}>
       <img className="decor decor-botanical" src="/art/botanical-pink.png" width="140" height="320" alt="" aria-hidden="true" loading="lazy" />
       <div className="hero-copy">
         <img className="decor decor-campus" src="/art/campus-sketch-pink.png" width="472" height="238" alt="" aria-hidden="true" loading="lazy" />
@@ -133,8 +124,8 @@ function Hero({ query, onQuery, onSubmit, suggest }) {
         </h1>
         <p className="hero-sub">Search by title, author, subject or shelf code.</p>
         <p className="hero-hint">One letter is enough to get started.</p>
-        <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} autoFocus />
-        <Suggestions q={suggest} />
+        <SearchBar value={query} onChange={onQuery} onSubmit={onSubmit} onKeyDown={onKeyDown} inputProps={inputProps} autoFocus />
+        {children}
         <HitCount />
       </div>
       <div className="hero-photo">
@@ -217,10 +208,15 @@ function Results({ q }) {
 
 export default function Home() {
   const [params] = useSearchParams();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const urlQuery = params.get("q") ?? "";
+  const resultsPage = pathname === "/search"; // old "all results" links still work
   const [query, setQuery] = useState(urlQuery);
   const debounced = useDebounced(query.trim(), 150);
+  const typed = resultsPage && debounced === urlQuery ? "" : debounced;
+  const result = useSuggest(typed);
+  const [active, setActive] = useState(0);
   useDocumentTitle(urlQuery ? `“${urlQuery}”` : "");
 
   // Keep the input in step with back/forward navigation.
@@ -228,15 +224,53 @@ export default function Home() {
     setQuery((current) => (current.trim() === urlQuery ? current : urlQuery));
   }, [urlQuery]);
 
-  const submit = (value) => {
-    const q = value.trim();
-    navigate(q ? `/search${toQuery({ q })}` : "/", { replace: true });
+  // The query lives in the URL (/?q=…) so Back from a book returns to the same chips.
+  useEffect(() => {
+    if (debounced === urlQuery) return;
+    navigate(debounced ? `/${toQuery({ q: debounced })}` : "/", { replace: true });
+    // eslint-disable-next-line
+  }, [debounced]);
+
+  useEffect(() => setActive(0), [result]);
+
+  const items = result?.items ?? [];
+
+  // Enter (or the arrow button) opens the highlighted book; nothing if no match.
+  const submit = () => {
+    const item = items[active];
+    if (!item) return;
+    const q = query.trim();
+    if (q !== urlQuery || resultsPage) navigate(`/${toQuery({ q })}`, { replace: true });
+    navigate(`/book/${item.id}`);
   };
 
+  const onKeyDown = (event) => {
+    if (!items.length) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setActive((i) => Math.min(items.length - 1, Math.max(0, i + (event.key === "ArrowDown" ? 1 : -1))));
+    }
+  };
+
+  const activeItem = items[active];
   return (
     <>
-      <Hero query={query} onQuery={setQuery} onSubmit={submit} suggest={debounced === urlQuery ? "" : debounced} />
-      {urlQuery && <Results q={urlQuery} />}
+      <Hero
+        query={query}
+        onQuery={setQuery}
+        onSubmit={submit}
+        onKeyDown={onKeyDown}
+        searching={Boolean(result)}
+        inputProps={{
+          role: "combobox",
+          "aria-expanded": Boolean(items.length),
+          "aria-controls": "title-chips",
+          "aria-activedescendant": activeItem ? `chip-${activeItem.id}` : undefined,
+        }}
+      >
+        <Suggestions q={typed} result={result} active={active} onActive={setActive} />
+      </Hero>
+      {resultsPage && urlQuery && !result && <Results q={urlQuery} />}
     </>
   );
 }

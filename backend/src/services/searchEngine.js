@@ -97,6 +97,29 @@ export function search(db, { q, fields: onlyFields, page = 1, limit = 20, includ
 }
 
 /**
+ * Every matching title for the live chips: light rows ({ id, text, type }),
+ * same matching and order as search(), up to `ceiling` items.
+ */
+export function suggest(db, { q, ceiling = 5000 }) {
+  const words = tokenize(q);
+  if (!words.length) return { query: q ?? "", total: 0, items: [] };
+  const titleKey = listFields(db).find((f) => f.role === "title")?.key;
+  const where = words.map(() => "search_text LIKE ? ESCAPE '\\'").join(" AND ");
+  const params = words.map((w) => `%${escapeLike(w)}%`);
+  const text = titleKey ? "json_extract(data, ?)" : "''";
+  const rows = db
+    .prepare(`SELECT row_id, title_text, ${text} AS text FROM books WHERE ${where}`)
+    .all(...(titleKey ? [jsonPath(titleKey)] : []), ...params);
+  const scored = rows.map((r) => ({ ...r, score: scoreTitle(r.title_text, words), title: r.title_text }));
+  scored.sort(byScoreThenTitle);
+  return {
+    query: q,
+    total: scored.length,
+    items: scored.slice(0, ceiling).map((r) => ({ id: r.row_id, text: String(r.text ?? "").trim() || "Untitled", type: "title" })),
+  };
+}
+
+/**
  * Paged listing for browsing. `filters` is {fieldKey: value} (exact match,
  * case-insensitive).
  */

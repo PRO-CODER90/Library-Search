@@ -25,6 +25,10 @@ Node 22.13+ required. In development the server prints a one-off admin password 
 - **Schema-less catalogue:** upload any CSV; columns become fields automatically (replace / append / upsert, dry-run diff). The UI renders from `/api/fields`, never from hard-coded column names.
 - **Admin:** the header's **Login** button opens `/login`; the dashboard is `/admin` (Books, Upload, Fields; a separate lazy chunk, `noindex`). Sign-in with a scrypt-hashed password, `HttpOnly; SameSite=Strict` session cookie, CSRF header, rate limiting (10 failures / 15 min), audit log. Without a session every admin endpoint answers 401.
 
+## Hit counter
+
+"Hit count" under the search box is stored on the server and never resets: Upstash Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set (use this on Vercel), otherwise the SQLite database on a persistent disk. On Vercel without Upstash it shows "—" (the API answers 503) instead of a count that would reset.
+
 ## Admin setup
 
 ```bash

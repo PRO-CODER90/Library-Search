@@ -126,6 +126,11 @@ export function importTable(db, { buffer, filename = "upload.csv", mode = "repla
         const missing = parsed.records.filter((r) => !String(r[titleKey] ?? "").trim()).length;
         if (missing) warnings.push(`${missing} row${missing === 1 ? " has" : "s have"} no title (mandatory).`);
       }
+      if (titleKey) {
+        // A Latin title with a stray character from another script (e.g. "The白 Silk Road").
+        const odd = parsed.records.filter((r) => mixedScripts(String(r[titleKey] ?? ""))).length;
+        if (odd) warnings.push(`${odd} title${odd === 1 ? " contains" : "s contain"} unexpected characters (mixed scripts).`);
+      }
       if (authorKey) {
         const missing = parsed.records.filter((r) => !String(r[authorKey] ?? "").trim()).length;
         if (missing) warnings.push(`${missing} row${missing === 1 ? " has" : "s have"} no first author (mandatory).`);
@@ -215,6 +220,11 @@ export function importTable(db, { buffer, filename = "upload.csv", mode = "repla
     },
     { rollback: dryRun }
   );
+}
+
+/** Latin letters mixed with letters from another script in one title. */
+export function mixedScripts(text) {
+  return /\p{Script=Latin}/u.test(text) && /[^\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}\s]/u.test(text);
 }
 
 /** Backwards-compatible name. */

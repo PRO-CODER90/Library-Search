@@ -1,18 +1,21 @@
-// Public visit counter shown under the search box ("Hit count").
-// The browser posts once per session; reads are free.
+// Public visit counter ("Hit count" under the search box). The browser posts
+// once per page load; the number always comes from the server.
 
-const read = (db) => db.prepare("SELECT value FROM counters WHERE name = 'hits'").get()?.value ?? 0;
+import { HttpError } from "../http.js";
+import { HitStoreUnavailable } from "../services/hitStore.js";
 
-export function registerHitRoutes(router, { db }) {
-  router.add("GET", "/api/hits", () => ({ hits: read(db) }));
+export function registerHitRoutes(router, { hits }) {
+  async function run(fn) {
+    try {
+      return { total: await fn() };
+    } catch (error) {
+      if (error instanceof HitStoreUnavailable || error?.name === "TypeError") {
+        throw new HttpError(503, "The hit counter is not available right now.");
+      }
+      throw error;
+    }
+  }
 
-  router.add(
-    "POST",
-    "/api/hits",
-    () => {
-      db.prepare("INSERT INTO counters (name, value) VALUES ('hits', 1) ON CONFLICT(name) DO UPDATE SET value = value + 1").run();
-      return { hits: read(db) };
-    },
-    { rateLimit: "hits" }
-  );
+  router.add("GET", "/api/visits", () => run(() => hits.getHits()));
+  router.add("POST", "/api/visit", () => run(() => hits.incrementHits()), { rateLimit: "hits" });
 }

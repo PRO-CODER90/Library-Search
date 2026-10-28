@@ -20,7 +20,7 @@ export const CSRF = { "X-Requested-With": "library-admin" };
 export const sample = (name) => readFileSync(join(here, "../sample-data", name));
 
 /** Start an app on a random port with an in-memory database. */
-export async function startApp(overrides = {}, env = {}) {
+export async function startApp(overrides = {}, env = {}, { db: givenDb, fetchImpl } = {}) {
   const logs = [];
   const config = {
     ...loadConfig({ ...ADMIN_ENV, PUBLIC_DIR: "backend/tests/fixtures/site", ...env }),
@@ -29,8 +29,8 @@ export async function startApp(overrides = {}, env = {}) {
     loginFailureDelayMs: 0,
     ...overrides,
   };
-  const db = openDatabase(":memory:");
-  const server = createServer(createApp({ db, config, log: (line) => logs.push(JSON.parse(line)) }));
+  const db = givenDb ?? openDatabase(":memory:");
+  const server = createServer(createApp({ db, config, fetchImpl, log: (line) => logs.push(JSON.parse(line)) }));
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   let sessionCookie = null;

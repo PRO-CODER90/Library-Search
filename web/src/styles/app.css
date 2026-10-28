@@ -583,14 +583,21 @@ kbd {
   z-index: 3;
   max-width: 890px;
   max-height: min(34vh, 320px);
-  margin-top: clamp(0.6rem, 1.6vh, 1rem);
-  padding: 4px 4px 8px;
-  overflow: hidden; /* chips that don't fit are hidden in JS, never scrolled */
+  padding: 8px 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Scrolls with wheel, touch and keys, but shows no bar; soft fades hint at more. */
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent);
 }
-.suggest-more {
-  margin: 4px 0 0;
+.suggest::-webkit-scrollbar {
+  display: none;
+}
+.suggest-count {
+  margin: clamp(0.5rem, 1.4vh, 0.9rem) 0 0;
   color: var(--ink-600);
-  font: 600 0.9rem var(--font-sans);
+  font: 600 0.92rem var(--font-sans);
 }
 .chips-list {
   display: flex;
@@ -613,14 +620,19 @@ kbd {
   transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
 }
 .suggest-chip:hover,
-.suggest-chip:focus-visible {
+.suggest-chip:focus-visible,
+.suggest-chip.is-active {
   border-color: var(--pink-500);
   box-shadow: 0 6px 16px rgba(232, 52, 138, 0.18);
-  transform: translateY(-1px);
 }
-.suggest-empty {
-  margin: 0;
-  color: var(--ink-600);
+.suggest-chip.is-active {
+  background: var(--pink-50);
+  outline: 2px solid var(--pink-500);
+  outline-offset: 1px;
+}
+.chips-sentinel {
+  width: 1px;
+  height: 1px;
 }
 
 .hit-count {

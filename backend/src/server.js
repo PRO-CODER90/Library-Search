@@ -18,11 +18,12 @@ import { registerFieldRoutes } from "./routes/fields.js";
 import { registerUploadRoutes } from "./routes/upload.js";
 import { registerAdminSessionRoutes } from "./routes/adminSession.js";
 import { registerHitRoutes } from "./routes/hits.js";
+import { createHitStore } from "./services/hitStore.js";
 
 const notFound = () => new HttpError(404, "Unknown API endpoint.");
 const signInRequired = () => new HttpError(401, "Sign in required.");
 
-export function createApp({ db, config, log }) {
+export function createApp({ db, config, log, fetchImpl }) {
   const audit = createAudit({ trustProxy: config.trustProxy, log });
   const auth = createAdminAuth({
     admin: config.admin,
@@ -37,7 +38,8 @@ export function createApp({ db, config, log }) {
     hits: createRateLimiter({ max: config.hitRateLimit ?? 30, windowMs: 60 * 60 * 1000 }),
   };
   const router = createRouter();
-  const ctx = { db, config, auth, audit };
+  const hits = createHitStore({ db, config, fetchImpl });
+  const ctx = { db, config, auth, audit, hits };
   registerSearchRoutes(router, ctx);
   registerBookRoutes(router, ctx);
   registerFieldRoutes(router, ctx);
