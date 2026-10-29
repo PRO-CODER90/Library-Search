@@ -17,6 +17,14 @@ const projectDir = resolve(backendDir, "..");
 
 export class ConfigError extends Error {}
 
+/** Forgive common paste mistakes: spaces, quotes, or "NAME=" pasted into the value. */
+export function cleanSetting(value, name) {
+  let v = String(value ?? "").trim();
+  if (v.startsWith(`${name}=`)) v = v.slice(name.length + 1).trim();
+  if (v.length > 1 && (v[0] === '"' || v[0] === "'") && v.at(-1) === v[0]) v = v.slice(1, -1).trim();
+  return v;
+}
+
 function persistentSecret(file) {
   if (existsSync(file)) return readFileSync(file, "utf8").trim();
   mkdirSync(dirname(file), { recursive: true });
@@ -28,9 +36,9 @@ function persistentSecret(file) {
 function adminConfig(env, production, warnings) {
   if (env.ADMIN_DISABLED === "true") return { enabled: false };
 
-  let username = env.ADMIN_USERNAME ?? "";
-  let passwordHash = env.ADMIN_PASSWORD_HASH ?? "";
-  let sessionSecret = env.SESSION_SECRET ?? "";
+  let username = cleanSetting(env.ADMIN_USERNAME, "ADMIN_USERNAME");
+  let passwordHash = cleanSetting(env.ADMIN_PASSWORD_HASH, "ADMIN_PASSWORD_HASH");
+  let sessionSecret = cleanSetting(env.SESSION_SECRET, "SESSION_SECRET");
   let devPassword = "";
   // SESSION_SECRET=auto (library PC): a random secret made on first start and
   // kept in data/session-secret, so the .env file holds no signing key.

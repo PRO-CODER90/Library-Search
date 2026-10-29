@@ -248,6 +248,18 @@ describe("configuration safety", () => {
     await app.close();
   });
 
+  test("pasted settings with spaces, quotes or the NAME= prefix still work", () => {
+    const c = loadConfig({
+      ...prod,
+      ADMIN_USERNAME: " PU01A ",
+      ADMIN_PASSWORD_HASH: `ADMIN_PASSWORD_HASH=${ADMIN_ENV.ADMIN_PASSWORD_HASH}\n`,
+      SESSION_SECRET: `"${ADMIN_ENV.SESSION_SECRET}"`,
+    });
+    assert.equal(c.admin.username, "PU01A");
+    assert.equal(c.admin.passwordHash, ADMIN_ENV.ADMIN_PASSWORD_HASH);
+    assert.equal(c.admin.sessionSecret, ADMIN_ENV.SESSION_SECRET);
+  });
+
   test("SESSION_SECRET=auto makes one random secret and keeps it", () => {
     const a = loadConfig({ ...prod, ...ADMIN_ENV, SESSION_SECRET: "auto" });
     const b = loadConfig({ ...prod, ...ADMIN_ENV, SESSION_SECRET: "auto" });
