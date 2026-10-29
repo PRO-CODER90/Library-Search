@@ -248,6 +248,13 @@ describe("configuration safety", () => {
     await app.close();
   });
 
+  test("SESSION_SECRET=auto makes one random secret and keeps it", () => {
+    const a = loadConfig({ ...prod, ...ADMIN_ENV, SESSION_SECRET: "auto" });
+    const b = loadConfig({ ...prod, ...ADMIN_ENV, SESSION_SECRET: "auto" });
+    assert.ok(a.admin.sessionSecret.length >= 32 && a.admin.sessionSecret !== "auto");
+    assert.equal(a.admin.sessionSecret, b.admin.sessionSecret, "same secret after a restart");
+  });
+
   test("development never uses a fixed default password", () => {
     const a = loadConfig({});
     const b = loadConfig({});

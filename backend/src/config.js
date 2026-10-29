@@ -7,6 +7,7 @@
 // ADMIN_DISABLED=true runs a public-only site with no admin at all.
 
 import { randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHash } from "./utils/password.js";
@@ -16,6 +17,14 @@ const projectDir = resolve(backendDir, "..");
 
 export class ConfigError extends Error {}
 
+function persistentSecret(file) {
+  if (existsSync(file)) return readFileSync(file, "utf8").trim();
+  mkdirSync(dirname(file), { recursive: true });
+  const secret = randomBytes(48).toString("base64url");
+  writeFileSync(file, secret, { mode: 0o600 });
+  return secret;
+}
+
 function adminConfig(env, production, warnings) {
   if (env.ADMIN_DISABLED === "true") return { enabled: false };
 
@@ -23,6 +32,9 @@ function adminConfig(env, production, warnings) {
   let passwordHash = env.ADMIN_PASSWORD_HASH ?? "";
   let sessionSecret = env.SESSION_SECRET ?? "";
   let devPassword = "";
+  // SESSION_SECRET=auto (library PC): a random secret made on first start and
+  // kept in data/session-secret, so the .env file holds no signing key.
+  if (sessionSecret === "auto") sessionSecret = persistentSecret(resolve(projectDir, "data/session-secret"));
 
   // On Vercel with no admin settings at all, run public-only rather than take the
   // public site down: no admin routes exist. A partial or weak setup still fails.

@@ -23,7 +23,7 @@ The database is **SQLite, built into Node.js** — nothing else to install, no d
 All data (books, fields, hit count) is one file: `data/library.db`, created on first start.
 
 1. Install Node.js 22.13+ and run `npm run build` once.
-2. `npm run admin:hash -- --generate`, then copy `.env.example` to `.env` and paste the printed `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` into it.
+2. Put the library's `.env` (handed over separately, not in Git) next to `package.json`. Or create one: copy `.env.example`, run `npm run admin:hash` for `ADMIN_PASSWORD_HASH`, and set `SESSION_SECRET=auto` (a random key is created on first start in `data/session-secret`).
 3. `npm start`, open http://localhost:5000, click **Login** and upload the Excel catalogue.
 
 Backup: stop the server and copy `data/library.db` (restore by copying it back). Leave the Upstash settings empty on a library PC.
