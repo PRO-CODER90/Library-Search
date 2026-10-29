@@ -34,7 +34,10 @@ function adminConfig(env, production, warnings) {
   let devPassword = "";
   // SESSION_SECRET=auto (library PC): a random secret made on first start and
   // kept in data/session-secret, so the .env file holds no signing key.
-  if (sessionSecret === "auto") sessionSecret = persistentSecret(resolve(projectDir, "data/session-secret"));
+  if (sessionSecret === "auto") {
+    if (env.VERCEL) throw new ConfigError("SESSION_SECRET=auto is for a library PC; on Vercel set a real random value.");
+    sessionSecret = persistentSecret(resolve(projectDir, "data/session-secret"));
+  }
 
   // On Vercel with no admin settings at all, run public-only rather than take the
   // public site down: no admin routes exist. A partial or weak setup still fails.
