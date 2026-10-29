@@ -3,6 +3,7 @@
 
 import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
+import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ConfigError, loadConfig } from "./config.js";
 import { openDatabase } from "./db.js";
@@ -102,12 +103,12 @@ export function createApp({ db, config, log, fetchImpl }) {
   };
 }
 
-/** Load the sample CSV into an empty database (testing/demo only). */
+/** Load the bundled catalogue (Excel or CSV) into an empty database. */
 export function loadSampleIfEmpty(db, config) {
   if (!config.autoLoadSample) return null;
   const empty = db.prepare("SELECT (SELECT count(*) FROM books) + (SELECT count(*) FROM fields) AS n").get().n === 0;
   if (!empty) return null;
-  const report = importCsv(db, { buffer: readFileSync(config.sampleFile), filename: "sample-books.csv", mode: "replace" });
+  const report = importCsv(db, { buffer: readFileSync(config.sampleFile), filename: basename(config.sampleFile), mode: "replace" });
   return report;
 }
 

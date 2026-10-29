@@ -37,6 +37,10 @@ To let other PCs on the library network use it, open `http://<this-PC-IP>:5000` 
 - **Schema-less catalogue:** upload any CSV; columns become fields automatically (replace / append / upsert, dry-run diff). The UI renders from `/api/fields`, never from hard-coded column names.
 - **Admin:** the header's **Login** button opens `/login`; the dashboard is `/admin` (Books, Upload, Fields; a separate lazy chunk, `noindex`). Sign-in with a scrypt-hashed password, `HttpOnly; SameSite=Strict` session cookie, CSRF header, rate limiting (10 failures / 15 min), audit log. Without a session every admin endpoint answers 401.
 
+## Catalogue format
+
+The library sends its catalogue in the **Catalog and Holding Creation Template** (`.xlsx`, sheet `Holding_Creation`, field names in row 3, data from row 8). Upload it as is in **Admin → Upload**: Title, First/Second Author, Floor, Rack and Shelf are picked up automatically, blank locations get placeholders, and later files update matching books (entity_id, else Title + First Author). `backend/sample-data/catalogue.xlsx` is loaded into an empty database for the demo.
+
 ## Hit counter
 
 "Hit count" under the search box is stored on the server and never resets: Upstash Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set (use this on Vercel), otherwise the SQLite database on a persistent disk. On Vercel without Upstash it shows "—" (the API answers 503) instead of a count that would reset.

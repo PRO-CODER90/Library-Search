@@ -234,3 +234,15 @@ describe("uploading the supplied template", () => {
     assert.equal(field.searchable, true);
   });
 });
+
+test("the bundled catalogue (Holding_Creation template) loads into an empty database", async () => {
+  const { openDatabase } = await import("../src/db.js");
+  const { loadConfig } = await import("../src/config.js");
+  const { loadSampleIfEmpty } = await import("../src/server.js");
+  const db = openDatabase(":memory:");
+  const config = { ...loadConfig({ ADMIN_DISABLED: "true" }), autoLoadSample: true };
+  const report = loadSampleIfEmpty(db, config);
+  assert.equal(report.rowsImported, 85);
+  assert.equal(db.prepare("SELECT count(*) AS n FROM books").get().n, 85);
+  assert.equal(loadSampleIfEmpty(db, config), null, "never reloads over existing data");
+});

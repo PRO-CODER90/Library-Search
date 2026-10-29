@@ -109,7 +109,8 @@ export function loadConfig(env = process.env) {
     maxUploadBytes: (Number(env.MAX_UPLOAD_MB) || defaultUploadMb) * 1024 * 1024,
     corsOrigin: env.CORS_ORIGIN || "",
     autoLoadSample: autoLoad,
-    sampleFile: resolve(backendDir, "sample-data/sample-books.csv"),
+    // The library's catalogue in the Holding_Creation template (same format as future uploads).
+    sampleFile: resolve(backendDir, env.SAMPLE_FILE || "sample-data/catalogue.xlsx"),
     trustProxy: env.TRUST_PROXY === "true",
     publicDir,
     warnings,
