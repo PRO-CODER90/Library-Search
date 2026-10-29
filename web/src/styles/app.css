@@ -662,6 +662,7 @@ kbd {
 /* While typing: the photo steps aside and the chips use the full width. */
 .hero.is-searching {
   grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
 }
 .hero.is-searching .hero-photo,
 .hero.is-searching .decor-campus,

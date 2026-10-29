@@ -276,7 +276,7 @@ export default function Home() {
         onQuery={setQuery}
         onSubmit={submit}
         onKeyDown={onKeyDown}
-        searching={Boolean(result)}
+        searching={Boolean(result) || resultsPage}
         inputProps={{
           role: "combobox",
           "aria-expanded": Boolean(items.length),
