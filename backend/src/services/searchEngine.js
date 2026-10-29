@@ -97,8 +97,9 @@ export function search(db, { q, fields: onlyFields, page = 1, limit = 20, includ
 }
 
 /**
- * Every matching title for the live chips: light rows ({ id, text, type }),
- * same matching and order as search(), up to `ceiling` items.
+ * Every matching title for the live chips: light rows ({ id, text, type, count }),
+ * same matching and order as search(), up to `ceiling` items. Books that share
+ * a title (other authors or copies) become one chip; `count` says how many.
  */
 export function suggest(db, { q, ceiling = 5000 }) {
   const words = tokenize(q);
@@ -112,11 +113,15 @@ export function suggest(db, { q, ceiling = 5000 }) {
     .all(...(titleKey ? [jsonPath(titleKey)] : []), ...params);
   const scored = rows.map((r) => ({ ...r, score: scoreTitle(r.title_text, words), title: r.title_text }));
   scored.sort(byScoreThenTitle);
-  return {
-    query: q,
-    total: scored.length,
-    items: scored.slice(0, ceiling).map((r) => ({ id: r.row_id, text: String(r.text ?? "").trim() || "Untitled", type: "title" })),
-  };
+  const byTitle = new Map();
+  for (const r of scored) {
+    const key = r.title_text || `#${r.row_id}`;
+    const seen = byTitle.get(key);
+    if (seen) seen.count++;
+    else byTitle.set(key, { id: r.row_id, text: String(r.text ?? "").trim() || "Untitled", type: "title", count: 1 });
+  }
+  const items = [...byTitle.values()];
+  return { query: q, total: items.length, books: scored.length, items: items.slice(0, ceiling) };
 }
 
 /**

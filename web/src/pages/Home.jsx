@@ -9,6 +9,9 @@ import { BookCard, EmptyState, ErrorState } from "../components/ui.jsx";
 const PAGE_SIZE = 20;
 const BATCH = 200; // chips rendered at a time; more appear as the box scrolls
 
+/** One book opens its page; a title shared by several books lists them all. */
+const chipTarget = (item) => (item.count > 1 ? `/search${toQuery({ q: item.text })}` : `/book/${item.id}`);
+
 /** Every title matching `q` (one light request), or null while loading. */
 function useSuggest(q) {
   const [state, setState] = useState({ q: "", total: 0, items: [] });
@@ -56,7 +59,7 @@ function Suggestions({ q, result, active, onActive }) {
   return (
     <>
       <p className="suggest-count" aria-live="polite">
-        {total ? `${total.toLocaleString("en-IN")} ${total === 1 ? "result" : "results"}` : `No titles match “${q}”.`}
+        {total ? `${total.toLocaleString("en-IN")} ${total === 1 ? "title" : "titles"}` : `No titles match “${q}”.`}
       </p>
       {total > 0 && (
         <div className="suggest" ref={box}>
@@ -68,10 +71,11 @@ function Suggestions({ q, result, active, onActive }) {
                   role="option"
                   aria-selected={i === active}
                   className={i === active ? "suggest-chip is-active" : "suggest-chip"}
-                  to={`/book/${item.id}`}
+                  to={chipTarget(item)}
                   onMouseEnter={() => onActive(i)}
                 >
                   {item.text}
+                  {item.count > 1 && <span className="chip-count">{item.count} books</span>}
                 </Link>
               </li>
             ))}
@@ -253,7 +257,7 @@ export default function Home() {
     if (!item) return;
     const q = query.trim();
     if (q !== urlQuery || resultsPage) navigate(`/${toQuery({ q })}`, { replace: true });
-    navigate(`/book/${item.id}`);
+    navigate(chipTarget(item));
   };
 
   const onKeyDown = (event) => {

@@ -246,3 +246,15 @@ test("the bundled catalogue (Holding_Creation template) loads into an empty data
   assert.equal(db.prepare("SELECT count(*) AS n FROM books").get().n, 85);
   assert.equal(loadSampleIfEmpty(db, config), null, "never reloads over existing data");
 });
+
+test("suggest: books sharing a title become one chip with a count", async () => {
+  const app = await startApp();
+  await upload(app, TEMPLATE, { mode: "replace" });
+  const res = await app.call("/api/suggest?q=Transportation");
+  const titles = res.data.items.map((i) => i.text.toLowerCase());
+  assert.equal(new Set(titles).size, titles.length, "no duplicate chips");
+  const te = res.data.items.find((i) => i.text === "Transportation Engineering");
+  assert.ok(te.count > 1);
+  assert.equal(res.data.books, res.data.items.reduce((n, i) => n + i.count, 0));
+  await app.close();
+});

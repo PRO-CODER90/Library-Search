@@ -637,6 +637,15 @@ kbd {
   outline: 2px solid var(--pink-500);
   outline-offset: 1px;
 }
+.chip-count {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--pink-100);
+  color: var(--pink-600);
+  font-size: 0.78rem;
+  vertical-align: 1px;
+}
 .chips-sentinel {
   width: 1px;
   height: 1px;

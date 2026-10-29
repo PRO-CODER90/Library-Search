@@ -151,10 +151,10 @@ describe("search rules", () => {
     const res = await app.call("/api/suggest?q=a");
     const full = await app.call("/api/search?q=a&limit=100");
     assert.equal(res.status, 200);
-    assert.equal(res.data.total, full.data.total);
+    assert.equal(res.data.books, full.data.total);
     assert.equal(res.data.items.length, res.data.total, "no page limit");
-    assert.deepEqual(Object.keys(res.data.items[0]).sort(), ["id", "text", "type"]);
-    assert.deepEqual(res.data.items.map((i) => i.id), full.data.results.map((r) => r.id), "same order as search");
+    assert.deepEqual(Object.keys(res.data.items[0]).sort(), ["count", "id", "text", "type"]);
+    assert.equal(res.data.items.reduce((n, i) => n + i.count, 0), res.data.books);
     assert.equal((await app.call("/api/suggest?q=")).data.total, 0);
   });
 
