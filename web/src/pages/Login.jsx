@@ -13,9 +13,9 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Back to the page the visitor came from, or the dashboard.
+  // Signing in always opens the dashboard, unless it was an admin page that sent you here.
   const from = location.state?.from;
-  const target = from ? `${from.pathname}${from.search ?? ""}` : "/admin";
+  const target = from?.pathname?.startsWith("/admin") ? `${from.pathname}${from.search ?? ""}` : "/admin";
 
   if (me) return <Navigate to={target} replace />;
 

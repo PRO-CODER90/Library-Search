@@ -15,6 +15,12 @@ const AdminApp = lazy(() => import("./admin/AdminApp.jsx"));
 
 const Loading = () => <div className="page-loading" aria-busy="true" />;
 
+/** A signed-in admin goes straight to the dashboard instead of the public home page. */
+function HomeOrDashboard() {
+  const { me } = useAuth();
+  return me ? <Navigate to="/admin" replace /> : <Home />;
+}
+
 /** /admin: signed out → /login (and back here after signing in). */
 function AdminRoute() {
   const { me } = useAuth();
@@ -41,7 +47,7 @@ export default function App() {
           <Header />
           <main id="main" tabIndex={-1}>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<HomeOrDashboard />} />
               <Route path="/search" element={<Home />} />
               <Route path="/book/:id" element={<Book />} />
               {/* Browse is no longer linked from the header; kept for old links. */}
