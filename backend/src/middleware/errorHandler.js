@@ -9,6 +9,7 @@ export function handleError(error, req, res, url) {
   let status = 500;
   let message = "Something went wrong on the server.";
   let details;
+  let code;
   const headers = {};
 
   if (error instanceof HttpError) {
@@ -19,6 +20,8 @@ export function handleError(error, req, res, url) {
     message = error.message;
   } else {
     console.error(`[${new Date().toISOString()}] ${req.method} ${url?.pathname ?? req.url}`, error);
+    // A short error code (e.g. ERR_CRYPTO_INVALID_SCRYPT_PARAMS) helps diagnose without a stack trace.
+    code = typeof error?.code === "string" ? error.code : error?.name;
   }
 
   if (res.headersSent) return res.end();
@@ -26,5 +29,5 @@ export function handleError(error, req, res, url) {
     res.writeHead(404, { ...SECURITY_HEADERS, "Content-Type": "text/plain; charset=utf-8" });
     return res.end("Not found");
   }
-  sendJson(res, status, { error: message, ...(details ? { fields: details } : {}) }, headers);
+  sendJson(res, status, { error: message, ...(code ? { code } : {}), ...(details ? { fields: details } : {}) }, headers);
 }
