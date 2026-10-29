@@ -67,7 +67,8 @@ export function clientIp(req, trustProxy) {
     const forwarded = req.headers["x-forwarded-for"];
     if (typeof forwarded === "string" && forwarded) return forwarded.split(",")[0].trim();
   }
-  return req.socket.remoteAddress ?? "unknown";
+  // On Vercel the socket can be gone by the time the body has been read.
+  return req.socket?.remoteAddress ?? "unknown";
 }
 
 /** "/api/books/:id" style routing with per-route options. */

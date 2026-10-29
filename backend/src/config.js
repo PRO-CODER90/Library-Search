@@ -138,7 +138,8 @@ export function loadConfig(env = process.env) {
     autoLoadSample: autoLoad,
     // The library's catalogue in the Holding_Creation template (same format as future uploads).
     sampleFile: resolve(backendDir, env.SAMPLE_FILE || "sample-data/catalogue.xlsx"),
-    trustProxy: env.TRUST_PROXY === "true",
+    // Vercel sets X-Forwarded-For itself, so it can be trusted there.
+    trustProxy: env.TRUST_PROXY === undefined ? vercel : env.TRUST_PROXY === "true",
     publicDir,
     warnings,
   };
