@@ -80,7 +80,7 @@ button {
   accent-color: var(--navy-800);
 }
 mark {
-  background: #f6e3b4;
+  background: var(--pink-100);
   color: var(--ink-900);
   border-radius: 3px;
   padding: 0 1px;
