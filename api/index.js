@@ -24,6 +24,7 @@ function buildHandler() {
     if (!(error instanceof ConfigError)) throw error;
     console.error(`Admin configuration rejected, admin area disabled: ${error.message}`);
     config = loadConfig({ ...process.env, ADMIN_DISABLED: "true" });
+    config.adminProblem = error.message; // names settings only, never their values
   }
   for (const warning of config.warnings) console.warn(warning);
   const db = openDatabase(config.dbPath);

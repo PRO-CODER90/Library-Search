@@ -22,6 +22,8 @@ export function registerBookRoutes(router, { db, config, audit, auth }) {
   router.add("GET", "/api/health", () => ({
     status: "ok",
     books: db.prepare("SELECT count(*) AS n FROM books").get().n,
+    // Why sign-in is off, if it is (setting names only, never values).
+    ...(auth.enabled ? {} : { adminSetup: config.adminProblem ?? "No admin settings reached the server." }),
   }));
 
   // Public config: only what the public UI needs. Nothing about admin.
