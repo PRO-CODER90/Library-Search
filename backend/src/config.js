@@ -81,7 +81,9 @@ function adminConfig(env, production, warnings) {
   }
 
   if (passwordHash && !parseHash(passwordHash)) {
-    throw new ConfigError("ADMIN_PASSWORD_HASH is not a valid scrypt hash. Generate one with `npm run admin:hash`.");
+    // Describe the shape (never the value) so a bad paste is easy to spot.
+    const shape = `starts with "scrypt:": ${passwordHash.startsWith("scrypt:") ? "yes" : "no"}, ${passwordHash.split(":").length} of 6 parts, ${passwordHash.length} of ~110 characters`;
+    throw new ConfigError(`ADMIN_PASSWORD_HASH is not a valid scrypt hash (${shape}). Generate one with \`npm run admin:hash\`.`);
   }
   if (Buffer.byteLength(sessionSecret) < 32) {
     throw new ConfigError("SESSION_SECRET must be at least 32 bytes. Generate one with `npm run admin:hash -- --generate`.");
