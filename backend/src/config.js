@@ -84,7 +84,7 @@ function adminConfig(env, production, warnings) {
 
   if (passwordHash && !parseHash(passwordHash)) {
     // Describe the shape (never the value) so a bad paste is easy to spot.
-    const shape = `starts with "scrypt:": ${passwordHash.startsWith("scrypt:") ? "yes" : "no"}, ${passwordHash.split(":").length} of 6 parts, ${passwordHash.length} of 126 characters`;
+    const shape = `starts with "scrypt:": ${passwordHash.startsWith("scrypt:") ? "yes" : "no"}, ${passwordHash.split(":").length} of 6 parts, ${passwordHash.length} of 126 characters, cost "${passwordHash.split(":").slice(1, 4).join(":")}" (expected 32768:8:1)`;
     throw new ConfigError(`ADMIN_PASSWORD_HASH is not a valid scrypt hash (${shape}). Generate one with \`npm run admin:hash\`.`);
   }
   if (Buffer.byteLength(sessionSecret) < 32) {

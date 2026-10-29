@@ -25,8 +25,8 @@ export function parseHash(stored) {
   if (parts.length !== 6 || parts[0] !== "scrypt") return null;
   const [, N, r, p, salt, hash] = parts;
   const params = { N: Number(N), r: Number(r), p: Number(p) };
-  if (!Number.isInteger(params.N) || params.N < 2 ** 14 || (params.N & (params.N - 1)) !== 0) return null;
-  if (!Number.isInteger(params.r) || !Number.isInteger(params.p) || params.r < 1 || params.p < 1) return null;
+  if (!Number.isInteger(params.N) || params.N < 2 ** 14 || params.N > 2 ** 17 || (params.N & (params.N - 1)) !== 0) return null;
+  if (!Number.isInteger(params.r) || !Number.isInteger(params.p) || params.r < 1 || params.r > 16 || params.p < 1 || params.p > 4) return null;
   const saltBuf = Buffer.from(salt, "base64url");
   const hashBuf = Buffer.from(hash, "base64url");
   if (saltBuf.length < 16 || hashBuf.length !== KEY_LENGTH) return null;
