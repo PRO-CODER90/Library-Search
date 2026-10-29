@@ -21,7 +21,7 @@ export function handleError(error, req, res, url) {
   } else {
     console.error(`[${new Date().toISOString()}] ${req.method} ${url?.pathname ?? req.url}`, error);
     // A short error code (e.g. ERR_CRYPTO_INVALID_SCRYPT_PARAMS) helps diagnose without a stack trace.
-    code = typeof error?.code === "string" ? error.code : error?.name;
+    code = typeof error?.code === "string" ? error.code : `${error?.name}: ${String(error?.message).slice(0, 120)}`;
   }
 
   if (res.headersSent) return res.end();
