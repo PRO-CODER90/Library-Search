@@ -22,6 +22,8 @@ export function cleanSetting(value, name) {
   let v = String(value ?? "").trim();
   if (v.startsWith(`${name}=`)) v = v.slice(name.length + 1).trim();
   if (v.length > 1 && (v[0] === '"' || v[0] === "'") && v.at(-1) === v[0]) v = v.slice(1, -1).trim();
+  // Hashes and keys never contain spaces: drop anything pasted after the first line or space.
+  if (name !== "ADMIN_USERNAME") v = v.split(/\s/)[0];
   return v;
 }
 
@@ -82,7 +84,7 @@ function adminConfig(env, production, warnings) {
 
   if (passwordHash && !parseHash(passwordHash)) {
     // Describe the shape (never the value) so a bad paste is easy to spot.
-    const shape = `starts with "scrypt:": ${passwordHash.startsWith("scrypt:") ? "yes" : "no"}, ${passwordHash.split(":").length} of 6 parts, ${passwordHash.length} of ~110 characters`;
+    const shape = `starts with "scrypt:": ${passwordHash.startsWith("scrypt:") ? "yes" : "no"}, ${passwordHash.split(":").length} of 6 parts, ${passwordHash.length} of 126 characters`;
     throw new ConfigError(`ADMIN_PASSWORD_HASH is not a valid scrypt hash (${shape}). Generate one with \`npm run admin:hash\`.`);
   }
   if (Buffer.byteLength(sessionSecret) < 32) {
