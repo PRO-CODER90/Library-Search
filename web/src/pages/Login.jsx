@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useApi, useDocumentTitle } from "../hooks.js";
 import { useAuth } from "../auth.jsx";
@@ -12,6 +12,11 @@ export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Fetch the admin screen while the password is typed, so it opens at once after Login.
+  useEffect(() => {
+    import("../admin/AdminApp.jsx").catch(() => {});
+  }, []);
 
   // Logging in always opens the dashboard, unless it was an admin page that sent you here.
   const from = location.state?.from;

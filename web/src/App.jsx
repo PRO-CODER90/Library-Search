@@ -52,7 +52,13 @@ class AdminErrorBoundary extends Component {
   }
 }
 
-const Loading = () => <div className="page-loading" aria-busy="true" />;
+/** Visible progress while the session check or the admin screen loads. */
+const Loading = ({ label = "Loading…" }) => (
+  <div className="page-loading" aria-busy="true" role="status">
+    <span className="spinner" aria-hidden="true" />
+    <span>{label}</span>
+  </div>
+);
 
 /** A signed-in admin goes straight to the dashboard instead of the public home page. */
 function HomeOrDashboard() {
@@ -64,11 +70,11 @@ function HomeOrDashboard() {
 function AdminRoute() {
   const { me } = useAuth();
   const location = useLocation();
-  if (me === undefined) return <Loading />;
+  if (me === undefined) return <Loading label="Checking your login…" />;
   if (!me) return <Navigate to="/login" replace state={{ from: location }} />;
   return (
     <AdminErrorBoundary>
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<Loading label="Opening the admin panel…" />}>
         <AdminApp />
       </Suspense>
     </AdminErrorBoundary>
