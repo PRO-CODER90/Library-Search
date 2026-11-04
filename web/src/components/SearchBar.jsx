@@ -13,7 +13,7 @@ export default function SearchBar({ value, onChange, onSubmit, onKeyDown, inputP
 
   useEffect(() => {
     function onKey(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === "k") {
         event.preventDefault();
         input.current?.focus();
         input.current?.select();

@@ -40,7 +40,7 @@ function BrowseList({ field, value }) {
     setState((s) => ({ ...s, loading: true }));
     try {
       const data = await api(`/api/books${toQuery({ [field]: value, page, limit: PAGE_SIZE })}`);
-      setState((s) => ({ items: page === 1 ? data.results : [...s.items, ...data.results], total: data.total, page, loading: false, error: null }));
+      setState((s) => ({ items: page === 1 ? (data?.results ?? []) : [...s.items, ...(data?.results ?? [])], total: data?.total ?? 0, page, loading: false, error: null }));
     } catch (error) {
       setState((s) => ({ ...s, loading: false, error }));
     }

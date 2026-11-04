@@ -30,8 +30,9 @@ export async function api(path, { method = "GET", body, signal, admin = false } 
     throw new ApiError(0, "Can't reach the server. Check your connection and try again.");
   }
   if (response.status === 204) return null;
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(response.status, data.error ?? `Request failed (${response.status}).`, data.fields);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiError(response.status, data?.error ?? `Request failed (${response.status}).`, data?.fields);
+  if (data === null) throw new ApiError(response.status, "The server sent an unexpected reply. Try again.");
   return data;
 }
 

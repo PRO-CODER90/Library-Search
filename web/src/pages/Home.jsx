@@ -24,7 +24,7 @@ function useSuggest(q) {
     if (!q) return undefined;
     const controller = new AbortController();
     api(`/api/suggest${toQuery({ q })}`, { signal: controller.signal })
-      .then((data) => setState({ q, total: data.total, items: data.items }))
+      .then((data) => setState({ q, total: data?.total ?? 0, items: data?.items ?? [] }))
       .catch(() => {});
     return () => controller.abort();
   }, [q]);
@@ -103,7 +103,10 @@ let visit = null;
 function HitCount() {
   const [total, setTotal] = useState(undefined); // undefined = loading, null = failed
   useEffect(() => {
-    visit ??= api("/api/visit", { method: "POST" }).then((data) => data.total);
+    visit ??= api("/api/visit", { method: "POST" }).then((data) => {
+      if (typeof data?.total !== "number") throw new Error("No count");
+      return data.total;
+    });
     let alive = true;
     visit.then(
       (n) => alive && setTotal(n),
@@ -128,7 +131,7 @@ function PopularSearches({ onPick }) {
     let alive = true;
     const load = () =>
       api("/api/searches/popular?limit=3")
-        .then((data) => alive && setItems(data.items))
+        .then((data) => alive && setItems(data?.items ?? []))
         .catch(() => {});
     load();
     const timer = setInterval(load, 30000);
@@ -188,8 +191,8 @@ function Results({ q }) {
       const data = await api(`/api/search${toQuery({ q, page, limit: PAGE_SIZE })}`);
       setState((s) => ({
         q,
-        items: page === 1 ? data.results : [...s.items, ...data.results],
-        total: data.total,
+        items: page === 1 ? (data?.results ?? []) : [...s.items, ...(data?.results ?? [])],
+        total: data?.total ?? 0,
         page,
         loading: false,
         error: null,
@@ -258,13 +261,18 @@ export default function Home() {
     setQuery((current) => (current.trim() === urlQuery ? current : urlQuery));
   }, [urlQuery]);
 
-  // The query lives in the URL (/?q=…) as you type, so Back from a book keeps it.
+  // The query lives in the URL (/?q=…) so Back from a book keeps it. It follows
+  // the debounced value: browsers (Safari, Firefox) throw if the URL is
+  // rewritten on every keystroke.
   useEffect(() => {
-    const q = query.trim();
-    if (q === urlQuery) return;
-    navigate(q ? `/${toQuery({ q })}` : "/", { replace: true });
+    if (debounced === urlQuery) return;
+    try {
+      navigate(debounced ? `/${toQuery({ q: debounced })}` : "/", { replace: true });
+    } catch {
+      /* the browser refused this URL update; the search itself still works */
+    }
     // eslint-disable-next-line
-  }, [query]);
+  }, [debounced]);
 
   useEffect(() => {
     setActive(0);

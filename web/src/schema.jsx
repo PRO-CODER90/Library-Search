@@ -43,6 +43,16 @@ export function SchemaProvider({ children }) {
       .catch((error) => setState((s) => ({ ...s, error })));
   }, []);
   useEffect(reload, [reload]);
+  // A failed first load (cold start, network blip) is retried, so pages never wait forever.
+  useEffect(() => {
+    if (!state.error || state.schema) return undefined;
+    const timer = setTimeout(reload, 3000);
+    window.addEventListener("online", reload);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("online", reload);
+    };
+  }, [state.error, state.schema, reload]);
   return <SchemaContext.Provider value={{ ...state, reload }}>{children}</SchemaContext.Provider>;
 }
 
