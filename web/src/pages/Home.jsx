@@ -37,7 +37,9 @@ function Suggestions({ q, result, active, onActive }) {
   const sentinel = useRef(null);
   const [shown, setShown] = useState(BATCH);
 
-  useEffect(() => setShown(BATCH), [result]);
+  useEffect(() => {
+    setShown(BATCH);
+  }, [result]);
   useEffect(() => {
     if (active >= shown) setShown(Math.ceil((active + 1) / BATCH) * BATCH);
   }, [active, shown]);
@@ -264,7 +266,9 @@ export default function Home() {
     // eslint-disable-next-line
   }, [query]);
 
-  useEffect(() => setActive(0), [result]);
+  useEffect(() => {
+    setActive(0);
+  }, [result]);
 
   const items = result?.items ?? [];
 

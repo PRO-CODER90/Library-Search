@@ -22,7 +22,9 @@ function UserMenu({ me, signOut }) {
       document.removeEventListener("keydown", close);
     };
   }, [open]);
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <div className="user-menu" ref={box}>

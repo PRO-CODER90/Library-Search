@@ -144,7 +144,9 @@ async function download(path, fallback) {
 /** Inline Floor/Rack/Shelf editor for one row; saves on Enter or blur. */
 function LocationCells({ book, locationFields, onSave }) {
   const [values, setValues] = useState(() => Object.fromEntries(locationFields.map((f) => [f.key, book.data[f.key] ?? ""])));
-  useEffect(() => setValues(Object.fromEntries(locationFields.map((f) => [f.key, book.data[f.key] ?? ""]))), [book, locationFields]);
+  useEffect(() => {
+    setValues(Object.fromEntries(locationFields.map((f) => [f.key, book.data[f.key] ?? ""])));
+  }, [book, locationFields]);
   const dirty = locationFields.some((f) => (values[f.key] ?? "") !== (book.data[f.key] ?? ""));
   const save = () => dirty && onSave(book, values);
   return locationFields.map((f) => (

@@ -86,7 +86,11 @@ export default function App() {
   const { pathname } = useLocation();
   const fit = pathname === "/" || pathname.startsWith("/book/");
   // Every new page starts at the top (nothing anchors or scrolls on load).
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  // Braces matter: newer browsers return a Promise from scrollTo, and an effect
+  // must return nothing or a cleanup function (returning it crashed the page).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return (
     <AuthProvider>
       <SchemaProvider>
