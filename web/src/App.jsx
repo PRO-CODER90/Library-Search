@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { Component, lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { SchemaProvider } from "./schema.jsx";
 import { AuthProvider, useAuth } from "./auth.jsx";
@@ -10,8 +10,47 @@ import Browse from "./pages/Browse.jsx";
 import Login from "./pages/Login.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
-// The admin UI is a separate chunk, loaded only for a signed-in admin.
-const AdminApp = lazy(() => import("./admin/AdminApp.jsx"));
+// The admin UI is a separate chunk, loaded only for a signed-in admin. After a
+// new deploy an open tab may ask for the old chunk file, which no longer
+// exists: reload the page once to pick up the new version instead of hanging.
+const AdminApp = lazy(() =>
+  import("./admin/AdminApp.jsx").catch((error) => {
+    let reloaded = false;
+    try {
+      reloaded = sessionStorage.getItem("adminChunkReload") === "1";
+      sessionStorage.setItem("adminChunkReload", "1");
+    } catch {
+      /* storage blocked: fall through to the error screen */
+    }
+    if (!reloaded) {
+      window.location.reload();
+      return new Promise(() => {});
+    }
+    throw error;
+  })
+);
+
+/** If the admin screen fails to load or crashes, say so and offer a reload. */
+class AdminErrorBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error) {
+    console.error("Admin panel failed:", error);
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="page center">
+        <p className="empty-title">The admin panel didn't load.</p>
+        <button type="button" className="button" onClick={() => window.location.reload()}>
+          Reload
+        </button>
+      </div>
+    );
+  }
+}
 
 const Loading = () => <div className="page-loading" aria-busy="true" />;
 
@@ -28,9 +67,11 @@ function AdminRoute() {
   if (me === undefined) return <Loading />;
   if (!me) return <Navigate to="/login" replace state={{ from: location }} />;
   return (
-    <Suspense fallback={<Loading />}>
-      <AdminApp />
-    </Suspense>
+    <AdminErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <AdminApp />
+      </Suspense>
+    </AdminErrorBoundary>
   );
 }
 

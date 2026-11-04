@@ -537,3 +537,31 @@
     gap: 2px;
   }
 }
+
+/* Phones: one scrolling row of tabs, Logout at the end. */
+@media (max-width: 640px) {
+  .admin-bar-inner {
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-height: 52px;
+    padding: 6px 12px;
+  }
+  .admin-brand {
+    display: none;
+  }
+  .admin-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-tabs a {
+    flex: none;
+    padding: 7px 12px;
+  }
+  .admin-main {
+    padding: 16px 12px 48px;
+  }
+}

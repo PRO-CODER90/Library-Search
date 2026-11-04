@@ -24,6 +24,11 @@ const TABS = [
 
 function useNoIndex() {
   useEffect(() => {
+    try {
+      sessionStorage.removeItem("adminChunkReload");
+    } catch {
+      /* ignore */
+    }
     const meta = document.createElement("meta");
     meta.name = "robots";
     meta.content = "noindex,nofollow";
