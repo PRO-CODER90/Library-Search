@@ -84,7 +84,7 @@ function LoginHeader() {
           </span>
           <span className="brand-divider" aria-hidden="true" />
           <span className="brand-library">
-            <Icon name="book-open" size={36} />
+            <Icon name="book-open" size={26} />
             Library
           </span>
         </Link>
@@ -94,7 +94,7 @@ function LoginHeader() {
           </Link>
           <span className="login-links-divider" aria-hidden="true" />
           <Link to="/">
-            <Icon name="home" size={28} />
+            <Icon name="home" size={22} />
             <span>Home screen</span>
           </Link>
         </nav>

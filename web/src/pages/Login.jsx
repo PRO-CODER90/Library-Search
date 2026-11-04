@@ -55,7 +55,7 @@ export default function Login() {
           </p>
         )}
         <label className="login-input">
-          <Icon name="user" size={24} />
+          <Icon name="user" size={20} />
           <span className="visually-hidden">Username</span>
           <input
             id="username"
@@ -70,7 +70,7 @@ export default function Login() {
           />
         </label>
         <label className="login-input">
-          <Icon name="lock" size={24} />
+          <Icon name="lock" size={20} />
           <span className="visually-hidden">Password</span>
           <input
             id="password"
@@ -88,7 +88,7 @@ export default function Login() {
             aria-pressed={showPassword}
             onClick={() => setShowPassword((v) => !v)}
           >
-            <Icon name={showPassword ? "eye-off" : "eye"} size={24} />
+            <Icon name={showPassword ? "eye-off" : "eye"} size={20} />
           </button>
         </label>
         {error && (
