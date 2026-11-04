@@ -1246,6 +1246,7 @@ kbd {
   flex: 1;
   min-height: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: clamp(8px, 2vh, 24px) 16px clamp(16px, 5vh, 60px);
 }
@@ -1253,7 +1254,9 @@ kbd {
   display: grid;
   justify-items: center;
   gap: clamp(10px, 2vh, 18px);
-  width: min(760px, 100%);
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
   padding: clamp(24px, 4vh, 40px) clamp(20px, 6vw, 66px) clamp(28px, 5vh, 50px);
   border: 1.5px solid rgba(255, 255, 255, 0.75);
   border-radius: 36px;
@@ -1294,7 +1297,8 @@ kbd {
   display: flex;
   align-items: center;
   gap: 16px;
-  width: min(632px, 100%);
+  width: 100%;
+  max-width: 632px;
   min-height: clamp(56px, 8.5vh, 80px);
   padding: 0 22px 0 28px;
   border: 1.5px solid transparent;
@@ -1336,7 +1340,8 @@ kbd {
   background: var(--pink-50);
 }
 .login-submit {
-  width: min(632px, 100%);
+  width: 100%;
+  max-width: 632px;
   min-height: clamp(56px, 8.5vh, 82px);
   margin-top: clamp(4px, 1.4vh, 18px);
   border: 0;
@@ -1355,7 +1360,8 @@ kbd {
   cursor: progress;
 }
 .login-card .form-error {
-  width: min(632px, 100%);
+  width: 100%;
+  max-width: 632px;
   padding: 8px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.85);
