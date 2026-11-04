@@ -34,10 +34,12 @@ function valueMatches(value, word) {
 export function presentRow(row, fields, extra = {}, { includeHidden = false } = {}) {
   const data = JSON.parse(row.data);
   // Only expose active fields; inactive ones may linger in appended rows.
-  // Internal fields (the placeholder flag) only for the signed-in admin.
+  // Visitors get only what the public pages show (card fields, location and
+  // the title/author/category/availability roles); the full record, including
+  // internal fields like the placeholder flag, is for the signed-in admin.
   const visible = {};
   for (const f of fields) {
-    if (f.hidden && !includeHidden) continue;
+    if (!includeHidden && (f.hidden || !(f.show_in_card || f.is_location || f.role))) continue;
     if (data[f.key] !== undefined && data[f.key] !== "") visible[f.key] = data[f.key];
   }
   return { id: row.row_id, ...extra, data: visible, ...locationOf(data, fields) };

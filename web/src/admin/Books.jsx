@@ -15,6 +15,47 @@ const CHIPS = [
 ];
 const CHIP_QUERY = { placeholder: { [PLACEHOLDER]: "true" }, missing: { missing: "author" }, duplicates: { duplicates: "1" } };
 
+const LABELS = { [PLACEHOLDER]: "Placeholder location", entity_id: "Entity ID" };
+
+/** Admin-only: the whole stored record, including fields visitors never see. */
+function DetailsPanel({ id, schema }) {
+  const { call } = useAdmin();
+  const [record, setRecord] = useState(null);
+  useEffect(() => {
+    call(`/api/books/${id}`)
+      .then(setRecord)
+      .catch(() => setRecord(null));
+  }, [id, call]);
+  if (!record) return null;
+  const label = (key) => schema.fields.find((f) => f.key === key)?.label ?? LABELS[key] ?? key;
+  const when = (t) => (t ? new Date(`${t.replace(" ", "T")}Z`).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "—");
+  return (
+    <details className="details-panel">
+      <summary>Details</summary>
+      <dl>
+        <div>
+          <dt>Record ID</dt>
+          <dd>{record.id}</dd>
+        </div>
+        {Object.entries(record.data).map(([key, value]) => (
+          <div key={key}>
+            <dt>{label(key)}</dt>
+            <dd>{key === PLACEHOLDER ? (value === "true" ? "Yes" : "No") : String(value)}</dd>
+          </div>
+        ))}
+        <div>
+          <dt>Added</dt>
+          <dd>{when(record.createdAt)}</dd>
+        </div>
+        <div>
+          <dt>Last changed</dt>
+          <dd>{when(record.updatedAt)}</dd>
+        </div>
+      </dl>
+    </details>
+  );
+}
+
 function BookForm({ book, schema, onSaved, onClose }) {
   const { call } = useAdmin();
   const editable = schema.fields.filter((f) => !f.hidden);
@@ -67,6 +108,7 @@ function BookForm({ book, schema, onSaved, onClose }) {
             </div>
           </div>
         </details>
+        {book && <DetailsPanel id={book.id} schema={schema} />}
         {error && (
           <p className="form-error" role="alert">
             {error}

@@ -981,6 +981,49 @@ kbd {
   font-weight: 700;
 }
 
+/* Book page on one screen: sizes follow the window height. */
+.shell-fit .book {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: clamp(8px, 2.5vh, 32px);
+  padding-bottom: clamp(8px, 2vh, 24px);
+}
+.shell-fit .book .back {
+  margin-bottom: clamp(4px, 1vh, 10px);
+}
+.shell-fit .book-cover {
+  width: clamp(52px, 10vh, 96px);
+  font-size: clamp(1.4rem, 4vh, 2.6rem);
+}
+.shell-fit .book-title {
+  font-size: clamp(1.4rem, 3.4vh + 0.4rem, 2.5rem);
+}
+.shell-fit .book .section-title {
+  margin: clamp(10px, 2.6vh, 28px) 0 clamp(6px, 1.4vh, 12px);
+}
+.shell-fit .book .where-body {
+  margin-top: clamp(8px, 2vh, 18px);
+}
+.shell-fit .book .steps {
+  gap: clamp(4px, 1.2vh, 12px);
+}
+.shell-fit .bookcase-shelves li {
+  height: clamp(18px, 3.4vh, 30px);
+  margin-bottom: clamp(3px, 0.7vh, 6px);
+}
+@media (max-width: 640px) {
+  /* Phones: the steps say it all; the small rack drawing goes when space is short. */
+  .shell-fit .book .bookcase {
+    width: 100%;
+  }
+}
+@media (max-width: 640px) and (max-height: 760px) {
+  .shell-fit .book .bookcase {
+    display: none;
+  }
+}
+
 /* ---------- buttons ---------- */
 
 .button {

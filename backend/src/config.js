@@ -77,7 +77,7 @@ function adminConfig(env, production, warnings) {
     if (!passwordHash) {
       devPassword = randomBytes(12).toString("base64url");
       warnings.push(
-        `Development admin: open /login and sign in as "${username}" with password ${devPassword} (generated for this run only).`
+        `Development admin: open /login and log in as "${username}" with password ${devPassword} (generated for this run only).`
       );
     }
   }

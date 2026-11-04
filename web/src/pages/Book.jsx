@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useApi, useDocumentTitle } from "../hooks.js";
-import { formatValue, isTruthy, titleOf, useSchema } from "../schema.jsx";
+import { isTruthy, titleOf, useSchema } from "../schema.jsx";
 import { AvailabilityBadge, Directions, ErrorState, LocationSlip, ShelfDiagram, Skeleton } from "../components/ui.jsx";
 
 export default function Book() {
@@ -33,7 +33,6 @@ export default function Book() {
 
   const { author, category, availability } = schema.role;
   const unavailable = availability && book.data[availability.key] !== undefined && !isTruthy(book.data[availability.key]);
-  const facts = schema.detailFields.filter((f) => book.data[f.key] !== undefined && book.data[f.key] !== "");
 
   return (
     <article className="page book">
@@ -66,17 +65,6 @@ export default function Book() {
         {unavailable && <p className="note">This book is not available right now. Ask at the help desk.</p>}
       </section>
 
-      <section>
-        <h2 className="section-title">Details</h2>
-        <dl className="facts">
-          {facts.map((f) => (
-            <div key={f.key}>
-              <dt>{f.label}</dt>
-              <dd>{formatValue(f, book.data[f.key])}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
     </article>
   );
 }

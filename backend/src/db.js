@@ -67,6 +67,11 @@ export function openDatabase(path) {
   } catch {
     /* already there */
   }
+  try {
+    db.exec("ALTER TABLE books ADD COLUMN updated_at TEXT");
+  } catch {
+    /* already there */
+  }
   return db;
 }
 

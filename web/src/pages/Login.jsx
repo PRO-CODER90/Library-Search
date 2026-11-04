@@ -13,7 +13,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Signing in always opens the dashboard, unless it was an admin page that sent you here.
+  // Logging in always opens the dashboard, unless it was an admin page that sent you here.
   const from = location.state?.from;
   const target = from?.pathname?.startsWith("/admin") ? `${from.pathname}${from.search ?? ""}` : "/admin";
 
@@ -58,7 +58,7 @@ export default function Login() {
           </p>
         )}
         <button className="button" type="submit" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? "Logging in…" : "Login"}
         </button>
       </form>
     </div>

@@ -47,7 +47,7 @@ describe("admin endpoints reject requests without a session", () => {
       for (const [method, path, body] of ADMIN_ENDPOINTS) {
         const res = await app.raw(path, { method, body, headers });
         assert.equal(res.status, 401, `${method} ${path} → ${res.status}`);
-        assert.deepEqual(res.data, { error: "Sign in required." });
+        assert.deepEqual(res.data, { error: "Login required." });
       }
     });
   }

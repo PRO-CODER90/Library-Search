@@ -2,13 +2,14 @@
 // Every API call goes to the server, which enforces the session.
 
 import { createContext, useCallback, useContext, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiError, api } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { ToastProvider } from "./parts.jsx";
 import Books from "./Books.jsx";
 import Upload from "./Upload.jsx";
 import Fields from "./Fields.jsx";
+import Support from "./Support.jsx";
 import "./admin.css";
 
 const AdminContext = createContext(null);
@@ -18,6 +19,7 @@ const TABS = [
   ["books", "Books"],
   ["upload", "Upload"],
   ["fields", "Fields"],
+  ["support", "Support"],
 ];
 
 function useNoIndex() {
@@ -34,7 +36,12 @@ function useNoIndex() {
 export default function AdminApp() {
   useNoIndex();
   const { pathname } = useLocation();
-  const { me, signedOut } = useAuth();
+  const { me, signedOut, signOut } = useAuth();
+  const navigate = useNavigate();
+  const logout = async () => {
+    await signOut();
+    navigate("/", { replace: true });
+  };
 
   /** Admin API call: on a lost session (401), drop back to the sign-in page. */
   const call = useCallback(
@@ -50,7 +57,7 @@ export default function AdminApp() {
   );
 
   const tab = pathname.split("/")[2] || "books";
-  const Screen = { books: Books, upload: Upload, fields: Fields }[tab] ?? Books;
+  const Screen = { books: Books, upload: Upload, fields: Fields, support: Support }[tab] ?? Books;
 
   return (
     <AdminContext.Provider value={{ me, call }}>
@@ -60,11 +67,14 @@ export default function AdminApp() {
             <span className="admin-brand">Admin dashboard</span>
             <div className="admin-tabs">
               {TABS.map(([key, label]) => (
-                <Link key={key} to={`/admin/${key}`} aria-current={tab === key ? "page" : undefined}>
+                <Link key={key} to={key === "support" && tab !== "support" ? `/admin/support?from=${tab}` : `/admin/${key}`} aria-current={tab === key ? "page" : undefined}>
                   {label}
                 </Link>
               ))}
             </div>
+            <button type="button" className="button button-small button-ghost admin-logout" onClick={logout}>
+              Logout
+            </button>
           </div>
         </nav>
         <div className="admin-main">

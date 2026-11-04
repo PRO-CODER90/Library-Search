@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { SchemaProvider } from "./schema.jsx";
 import { AuthProvider, useAuth } from "./auth.jsx";
@@ -35,12 +35,15 @@ function AdminRoute() {
 }
 
 export default function App() {
-  // The bare home page fits one screen; search results and other pages scroll.
+  // Home and the book page fit one screen; search results and other pages scroll.
   const { pathname } = useLocation();
+  const fit = pathname === "/" || pathname.startsWith("/book/");
+  // Every new page starts at the top (nothing anchors or scrolls on load).
+  useEffect(() => window.scrollTo(0, 0), [pathname]);
   return (
     <AuthProvider>
       <SchemaProvider>
-        <div className={pathname === "/" ? "shell shell-fit" : "shell"}>
+        <div className={fit ? "shell shell-fit" : "shell"}>
           <a className="skip-link" href="#main">
             Skip to content
           </a>

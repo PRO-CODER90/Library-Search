@@ -425,3 +425,18 @@ describe("popular searches", () => {
     await app.close();
   });
 });
+
+describe("public book record", () => {
+  test("visitors get card/location/role fields only; the admin gets everything", async () => {
+    const app = await startApp();
+    await app.upload(sample("sample-books.csv"));
+    await app.call("/api/fields/isbn", { method: "PATCH", body: { show_in_card: false, role: "" }, token: TOKEN });
+    const id = (await app.call("/api/search?q=silk")).data.results[0].id;
+    const visitor = (await app.call(`/api/books/${id}`)).data;
+    const admin = (await app.call(`/api/books/${id}`, { token: TOKEN })).data;
+    assert.equal(visitor.data.isbn, undefined, "isbn is not a public field");
+    assert.ok(admin.data.isbn, "admin sees the full record");
+    assert.ok(visitor.data.title && visitor.locationParts.length);
+    await app.close();
+  });
+});

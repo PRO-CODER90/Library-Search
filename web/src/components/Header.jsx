@@ -26,7 +26,7 @@ function UserMenu({ me, signOut }) {
 
   return (
     <div className="user-menu" ref={box}>
-      <button type="button" className="signin-pill" aria-label={`Signed in as ${me.username}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="signin-pill" aria-label={`Logged in as ${me.username}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <span className="avatar" aria-hidden="true">
           {me.username.slice(0, 1).toUpperCase()}
         </span>
@@ -48,7 +48,7 @@ function UserMenu({ me, signOut }) {
                 if (pathname.startsWith("/admin")) navigate("/", { replace: true });
               }}
             >
-              <Icon name="log-out" size={18} /> Sign out
+              <Icon name="log-out" size={18} /> Logout
             </button>
           </li>
         </ul>
@@ -73,6 +73,8 @@ export default function Header() {
   const { data } = useApi("/api/config");
   const { me, signOut } = useAuth();
   const location = useLocation();
+  // The Login button lives on the Home screen only; admin pages have their own Logout.
+  const isHome = location.pathname === "/";
   const name = data?.libraryName || "Central Library";
   return (
     <header className="topbar">
@@ -91,14 +93,15 @@ export default function Header() {
           </span>
         </Link>
         <nav className="topnav" aria-label="Main">
-          {me ? (
-            <UserMenu me={me} signOut={signOut} />
-          ) : (
-            <Link className="signin-pill" to="/login" state={{ from: location.pathname === "/login" ? undefined : location }}>
-              <Icon name="user" size={22} />
-              <span>Sign In</span>
-            </Link>
-          )}
+          {isHome &&
+            (me ? (
+              <UserMenu me={me} signOut={signOut} />
+            ) : (
+              <Link className="signin-pill" to="/login">
+                <Icon name="user" size={22} />
+                <span>Login</span>
+              </Link>
+            ))}
         </nav>
       </div>
     </header>

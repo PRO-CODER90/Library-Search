@@ -23,7 +23,7 @@ import { registerPopularRoutes } from "./routes/popular.js";
 import { createHitStore } from "./services/hitStore.js";
 
 const notFound = () => new HttpError(404, "Unknown API endpoint.");
-const signInRequired = () => new HttpError(401, "Sign in required.");
+const signInRequired = () => new HttpError(401, "Login required.");
 
 export function createApp({ db, config, log, fetchImpl }) {
   const audit = createAudit({ trustProxy: config.trustProxy, log });

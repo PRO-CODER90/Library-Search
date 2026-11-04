@@ -156,7 +156,7 @@ export function importTable(db, { buffer, filename = "upload.csv", mode = "repla
         }
         const fields = listFields(db);
         const read = db.prepare("SELECT data FROM books WHERE row_id = ?");
-        const update = db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ?, dataset_id = ? WHERE row_id = ?");
+        const update = db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ?, dataset_id = ?, updated_at = CURRENT_TIMESTAMP WHERE row_id = ?");
         const fresh = [];
         for (const record of parsed.records) {
           const value = matchKey(record, key, titleKey, authorKey);
@@ -294,7 +294,7 @@ export function updateRecord(db, rowId, input) {
     const newKeys = registerRecordKeys(db, record);
     requireTitle(db, record);
     const { search_text, title_text } = indexRecord(record, listFields(db));
-    db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ? WHERE row_id = ?").run(
+    db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ?, updated_at = CURRENT_TIMESTAMP WHERE row_id = ?").run(
       JSON.stringify(record),
       search_text,
       title_text,
@@ -320,7 +320,7 @@ export function setLocations(db, ids, values) {
   if (!clean.length) throw new RecordError("Select at least one book.");
   return transaction(db, () => {
     const read = db.prepare("SELECT data FROM books WHERE row_id = ?");
-    const write = db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ? WHERE row_id = ?");
+    const write = db.prepare("UPDATE books SET data = ?, search_text = ?, title_text = ?, updated_at = CURRENT_TIMESTAMP WHERE row_id = ?");
     let updated = 0;
     for (const id of clean) {
       const row = read.get(id);

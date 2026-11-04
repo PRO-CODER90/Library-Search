@@ -14,7 +14,7 @@ export class HttpError extends Error {
 export const SECURITY_HEADERS = {
   "Content-Security-Policy":
     "default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; " +
-    "connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+    "connect-src 'self' https://formspree.io; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://formspree.io",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "DENY",

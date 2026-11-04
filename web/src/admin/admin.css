@@ -18,7 +18,9 @@
 }
 .admin-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  flex: 1;
 }
 .admin-tabs a {
   padding: 8px 16px;
@@ -424,5 +426,114 @@
   .admin-bar-inner {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* ---------- support ---------- */
+
+.support {
+  display: grid;
+  gap: 18px;
+  max-width: 900px;
+}
+.support h1 {
+  margin: 0;
+  color: var(--navy-900);
+}
+.support-card h2,
+.support-form h2 {
+  margin: 0 0 10px;
+  color: var(--navy-900);
+  font-size: 1.15rem;
+}
+.support-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.support-list div {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.support-list dt {
+  color: var(--ink-600);
+  font-weight: 600;
+}
+.support-list dd {
+  margin: 0;
+}
+.support-note {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--pink-50);
+  color: var(--pink-600);
+  font-weight: 600;
+}
+.field-error {
+  margin: 2px 0 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+.has-error input,
+.has-error select,
+.has-error textarea {
+  border-color: var(--danger);
+}
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.char-count {
+  justify-self: end;
+  color: var(--ink-600);
+  font-size: 0.8rem;
+}
+.form-ok {
+  margin: 0;
+  color: var(--ok);
+  font-weight: 600;
+}
+.admin-logout {
+  margin-left: auto;
+}
+.details-panel {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--pink-50);
+}
+.details-panel summary {
+  font-weight: 700;
+  color: var(--navy-900);
+  cursor: pointer;
+}
+.details-panel dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0 0;
+}
+.details-panel dt {
+  color: var(--ink-600);
+  font-size: 0.8rem;
+}
+.details-panel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .support-list div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 }

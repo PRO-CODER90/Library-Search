@@ -12,9 +12,11 @@ function rowId(params) {
 }
 
 function fetchBook(db, id, includeHidden = false) {
-  const row = db.prepare("SELECT row_id, data FROM books WHERE row_id = ?").get(id);
+  const row = db.prepare("SELECT row_id, data, created_at, updated_at FROM books WHERE row_id = ?").get(id);
   if (!row) throw new HttpError(404, "Book not found.");
-  return presentRow(row, listFields(db), {}, { includeHidden });
+  // The full record with timestamps is for the admin's Details panel only.
+  const extra = includeHidden ? { createdAt: row.created_at, updatedAt: row.updated_at ?? row.created_at } : {};
+  return presentRow(row, listFields(db), extra, { includeHidden });
 }
 
 export function registerBookRoutes(router, { db, config, audit, auth }) {

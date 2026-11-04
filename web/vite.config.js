@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // Read VITE_* settings (Support contact details) from the project's .env.
+  // Only VITE_-prefixed values reach the browser; admin secrets never do.
+  envDir: "..",
   resolve: { alias: { "@shared": fileURLToPath(new URL("../shared", import.meta.url)) } },
   server: {
     proxy: { "/api": "http://localhost:5000" },

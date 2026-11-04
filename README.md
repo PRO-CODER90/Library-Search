@@ -41,6 +41,10 @@ To let other PCs on the library network use it, open `http://<this-PC-IP>:5000` 
 
 The library sends its catalogue in the **Catalog and Holding Creation Template** (`.xlsx`, sheet `Holding_Creation`, field names in row 3, data from row 8). Upload it as is in **Admin → Upload**: Title, First/Second Author, Floor, Rack and Shelf are picked up automatically, blank locations get placeholders, and later files update matching books (entity_id, else Title + First Author). `backend/sample-data/catalogue.xlsx` is loaded into an empty database for the demo.
 
+## Admin Support tab
+
+Admin → **Support** shows the developer's contact card and a help form that posts to Formspree. Set `VITE_SUPPORT_NAME`, `VITE_SUPPORT_EMAIL`, `VITE_SUPPORT_PHONE`, `VITE_SUPPORT_HOURS` (and optionally `VITE_FORMSPREE_ENDPOINT`) before `npm run build`. In the Formspree dashboard, turn on spam filtering and allow only the library's site address.
+
 ## Hit counter
 
 "Hit count" under the search box is stored on the server and never resets: Upstash Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set (use this on Vercel), otherwise the SQLite database on a persistent disk. On Vercel without Upstash it shows "—" (the API answers 503) instead of a count that would reset.
