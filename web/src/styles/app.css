@@ -1183,15 +1183,13 @@ kbd {
 .shell-login {
   background-color: var(--navy-900);
   background-image:
-    linear-gradient(180deg, rgba(8, 20, 70, 0.55) 0%, rgba(8, 20, 70, 0) 22%),
-    radial-gradient(ellipse 42% 55% at 50% 52%, rgba(20, 36, 110, 0.38), rgba(20, 36, 110, 0.12) 70%, rgba(20, 36, 110, 0.08)),
+    linear-gradient(180deg, rgba(8, 20, 70, 0.7) 0%, rgba(8, 20, 70, 0.15) 20%, rgba(8, 20, 70, 0.1) 100%),
     url("/art/login-bg.jpg");
   background-image:
-    linear-gradient(180deg, rgba(8, 20, 70, 0.55) 0%, rgba(8, 20, 70, 0) 22%),
-    radial-gradient(ellipse 42% 55% at 50% 52%, rgba(20, 36, 110, 0.38), rgba(20, 36, 110, 0.12) 70%, rgba(20, 36, 110, 0.08)),
+    linear-gradient(180deg, rgba(8, 20, 70, 0.7) 0%, rgba(8, 20, 70, 0.15) 20%, rgba(8, 20, 70, 0.1) 100%),
     image-set(url("/art/login-bg.webp") type("image/webp"), url("/art/login-bg.jpg") type("image/jpeg"));
   background-size: cover;
-  background-position: center;
+  background-position: center 40%;
 }
 .topbar-login {
   background: transparent;
