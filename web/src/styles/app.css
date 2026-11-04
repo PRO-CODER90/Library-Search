@@ -1044,6 +1044,19 @@ kbd {
   }
 }
 
+.crash-detail {
+  max-width: 680px;
+  margin: 28px auto 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--pink-50);
+  color: var(--ink-600);
+  font: 0.75rem/1.5 var(--font-mono);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- buttons ---------- */
 
 .button {
