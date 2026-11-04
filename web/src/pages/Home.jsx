@@ -81,7 +81,6 @@ function Suggestions({ q, result, active, onActive }) {
                   onClick={() => reportSearch(q)}
                 >
                   {item.text}
-                  {item.count > 1 && <span className="chip-count">{item.count} books</span>}
                 </Link>
               </li>
             ))}
