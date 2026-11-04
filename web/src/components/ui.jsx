@@ -157,9 +157,6 @@ export function CategoryTiles({ facet }) {
         <li key={v.value}>
           <Link className="tile" to={`/browse/${encodeURIComponent(facet.field)}/${encodeURIComponent(v.value)}`}>
             <span className="tile-name">{v.value}</span>
-            <span className="tile-count">
-              {v.count.toLocaleString()} {v.count === 1 ? "book" : "books"}
-            </span>
           </Link>
         </li>
       ))}

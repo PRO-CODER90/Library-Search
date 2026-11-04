@@ -57,9 +57,6 @@ function BrowseList({ field, value }) {
       </Link>
       <p className="eyebrow eyebrow-plain">{schema?.byKey[field]?.label ?? field}</p>
       <h1 className="page-title">{value}</h1>
-      <p className="status" aria-live="polite">
-        {state.total ? `${state.total.toLocaleString()} ${state.total === 1 ? "book" : "books"}` : ""}
-      </p>
       {state.error && <ErrorState error={state.error} />}
       {!state.loading && !state.error && !state.total && <EmptyState title="No books here." />}
       {schema && (

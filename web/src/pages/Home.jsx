@@ -63,9 +63,11 @@ function Suggestions({ q, result, active, onActive }) {
   const { total, items } = result;
   return (
     <>
-      <p className="suggest-count" aria-live="polite">
-        {total ? `${total.toLocaleString("en-IN")} ${total === 1 ? "title" : "titles"}` : `No titles match “${q}”.`}
-      </p>
+      {!total && (
+        <p className="suggest-count" aria-live="polite">
+          No titles match “{q}”.
+        </p>
+      )}
       {total > 0 && (
         <div className="suggest" ref={box}>
           <ul className="chips-list" id="title-chips" role="listbox" aria-label="Matching titles">
@@ -203,9 +205,6 @@ function Results({ q }) {
   const stale = state.q !== q;
   return (
     <section className={`section results-section${state.loading && state.page === 0 ? " is-loading" : ""}`} aria-label="Search results">
-      <p className="status" aria-live="polite">
-        {!stale && !state.error && state.total > 0 ? `${state.total.toLocaleString()} ${state.total === 1 ? "book" : "books"} found` : ""}
-      </p>
       {state.error && <ErrorState error={state.error} />}
       {!stale && !state.error && state.total === 0 && (
         <EmptyState title={`No books found for “${q}”`}>Try fewer letters or a different word.</EmptyState>
@@ -220,7 +219,7 @@ function Results({ q }) {
       {!stale && state.items.length < state.total && (
         <div className="more">
           <button type="button" className="button button-ghost" disabled={state.loading} onClick={() => load(state.page + 1)}>
-            Show more ({(state.total - state.items.length).toLocaleString()} left)
+            Show more
           </button>
         </div>
       )}

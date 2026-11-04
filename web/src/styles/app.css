@@ -980,10 +980,6 @@ kbd {
 .tile-name {
   font-weight: 700;
 }
-.tile-count {
-  color: var(--ink-600);
-  font-size: 0.9rem;
-}
 
 /* ---------- buttons ---------- */
 
