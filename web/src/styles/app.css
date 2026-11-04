@@ -1077,13 +1077,6 @@ kbd {
 /* ---------- forms (login page; reused by the admin) ---------- */
 
 .card {
-  width: min(400px, 100%);
-}
-.admin-login h1 {
-  margin: 0 0 4px;
-  color: var(--navy-900);
-}
-.card {
   padding: 22px;
   background: var(--white);
   border: 1px solid var(--line);
@@ -1094,6 +1087,9 @@ kbd {
   display: grid;
   gap: 14px;
   font-family: var(--font-sans);
+}
+.form .field {
+  align-content: start;
 }
 .form h2 {
   margin: 0;
