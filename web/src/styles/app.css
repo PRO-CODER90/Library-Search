@@ -1252,6 +1252,7 @@ kbd {
 }
 .login-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   gap: clamp(10px, 2vh, 18px);
   width: 100%;
@@ -1313,6 +1314,7 @@ kbd {
 }
 .login-input input {
   flex: 1;
+  width: 0; /* no intrinsic input width: it fills what is left */
   min-width: 0;
   height: 100%;
   padding: 0;
