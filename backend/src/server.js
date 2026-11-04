@@ -19,6 +19,7 @@ import { registerFieldRoutes } from "./routes/fields.js";
 import { registerUploadRoutes } from "./routes/upload.js";
 import { registerAdminSessionRoutes } from "./routes/adminSession.js";
 import { registerHitRoutes } from "./routes/hits.js";
+import { registerPopularRoutes } from "./routes/popular.js";
 import { createHitStore } from "./services/hitStore.js";
 
 const notFound = () => new HttpError(404, "Unknown API endpoint.");
@@ -36,6 +37,7 @@ export function createApp({ db, config, log, fetchImpl }) {
   const limiters = {
     search: createRateLimiter({ max: config.searchRateLimit ?? 120, windowMs: 60 * 1000 }),
     upload: createRateLimiter({ max: config.uploadRateLimit ?? 10, windowMs: 60 * 60 * 1000 }),
+    searches: createRateLimiter({ max: config.searchLogRateLimit ?? 60, windowMs: 60 * 60 * 1000 }),
     hits: createRateLimiter({ max: config.hitRateLimit ?? 30, windowMs: 60 * 60 * 1000 }),
   };
   const router = createRouter();
@@ -47,6 +49,7 @@ export function createApp({ db, config, log, fetchImpl }) {
   registerUploadRoutes(router, ctx);
   registerAdminSessionRoutes(router, ctx);
   registerHitRoutes(router, ctx);
+  registerPopularRoutes(router, ctx);
   const serveStatic = createStaticHandler(config);
 
   async function handleApi(req, res, url) {

@@ -36,6 +36,13 @@ const SCHEMA = `
     uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS search_log (
+    query      TEXT PRIMARY KEY,           -- normalized (lowercase, single spaces)
+    display    TEXT NOT NULL,              -- as last typed, for the chip label
+    count      INTEGER NOT NULL DEFAULT 0,
+    last_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+
   CREATE TABLE IF NOT EXISTS counters (
     name  TEXT PRIMARY KEY,
     value INTEGER NOT NULL DEFAULT 0

@@ -26,10 +26,11 @@ function UserMenu({ me, signOut }) {
 
   return (
     <div className="user-menu" ref={box}>
-      <button type="button" className="login-pill login-icon" title={me.username} aria-label={`Signed in as ${me.username}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="signin-pill" aria-label={`Signed in as ${me.username}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <span className="avatar" aria-hidden="true">
           {me.username.slice(0, 1).toUpperCase()}
         </span>
+        <span>{me.username}</span>
       </button>
       {open && (
         <ul className="menu" role="menu">
@@ -56,6 +57,18 @@ function UserMenu({ me, signOut }) {
   );
 }
 
+/** PU shield mark (inline, so it stays crisp at any size). */
+function Shield() {
+  return (
+    <svg className="brand-shield" viewBox="0 0 40 46" width="40" height="46" aria-hidden="true">
+      <path d="M20 2 36 7v15c0 11-7.5 17.5-16 21C11.5 39.5 4 33 4 22V7Z" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round" />
+      <text x="20" y="27.5" textAnchor="middle" fontSize="13" fontWeight="700" fontFamily="system-ui, sans-serif" fill="currentColor">
+        PU
+      </text>
+    </svg>
+  );
+}
+
 export default function Header() {
   const { data } = useApi("/api/config");
   const { me, signOut } = useAuth();
@@ -63,43 +76,31 @@ export default function Header() {
   const name = data?.libraryName || "Central Library";
   return (
     <header className="topbar">
-      <div className="topbar-band">
-        <div className="topbar-inner">
-          <Link className="brand" to="/" aria-label={`Poornima University ${name}, book locator: home`}>
-            <img className="brand-logo" src="/logo-header.png" width="72" height="72" alt="" />
-            <span className="brand-text">
-              <span className="brand-uni">Poornima University</span>
-              <span className="brand-name">{name}</span>
-              <span className="brand-sub">Book Locator</span>
-            </span>
-          </Link>
-          <nav className="topnav" aria-label="Main">
-            {me ? (
-              <UserMenu me={me} signOut={signOut} />
-            ) : (
-              <Link
-                className="login-pill login-icon"
-                to="/login"
-                aria-label="Login"
-                title="Login"
-                state={{ from: location.pathname === "/login" ? undefined : location }}
-              >
-                <Icon name="user" size={22} />
-              </Link>
-            )}
-            <span className="partner">
-              <span className="partner-text">
-                <small>PROUD PARTNER OF</small>
-                <span>RAJASTHAN ROYALS</span>
-              </span>
-              <img src="/art/partner-logo.png" width="86" height="108" alt="Rajasthan Royals" />
-            </span>
-          </nav>
-        </div>
+      <div className="topbar-inner">
+        <Link className="brand" to="/" aria-label={`Poornima University ${name}, book locator: home`}>
+          <Shield />
+          <span className="brand-uni">
+            Poornima
+            <br />
+            University
+          </span>
+          <span className="brand-divider" aria-hidden="true" />
+          <span className="brand-lib">
+            <strong>{name}</strong>
+            <span>Book Locator</span>
+          </span>
+        </Link>
+        <nav className="topnav" aria-label="Main">
+          {me ? (
+            <UserMenu me={me} signOut={signOut} />
+          ) : (
+            <Link className="signin-pill" to="/login" state={{ from: location.pathname === "/login" ? undefined : location }}>
+              <Icon name="user" size={22} />
+              <span>Sign In</span>
+            </Link>
+          )}
+        </nav>
       </div>
-      <svg className="topbar-wave" viewBox="0 0 1440 34" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 0H1440V6C1180 40 980 4 720 18 470 32 260 30 0 10Z" fill="currentColor" />
-      </svg>
     </header>
   );
 }

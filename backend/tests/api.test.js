@@ -406,3 +406,22 @@ describe("server behaviour", () => {
     await app.close();
   });
 });
+
+describe("popular searches", () => {
+  test("most frequent searches that find books, live; junk is not counted", async () => {
+    const app = await startApp();
+    await app.upload(sample("sample-books.csv"));
+    const report = (q) => app.call("/api/searches", { method: "POST", body: { q } });
+    assert.deepEqual((await app.call("/api/searches/popular")).data.items, []);
+    for (let i = 0; i < 3; i++) await report("Harry Potter");
+    await report("harry  potter");
+    for (let i = 0; i < 2; i++) await report("Physics");
+    await report("Algorithms");
+    assert.equal((await report("zzzz-no-such-book")).data.counted, false);
+    assert.equal((await report("a")).status, 400);
+    const top = (await app.call("/api/searches/popular?limit=3")).data.items;
+    assert.deepEqual(top.map((t) => t.q), ["Harry Potter", "Physics", "Algorithms"]);
+    assert.equal(top[0].count, 4);
+    await app.close();
+  });
+});
