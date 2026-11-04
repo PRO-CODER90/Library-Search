@@ -71,6 +71,38 @@ function Shield() {
   );
 }
 
+/** The Login screen's own header: PU | LIBRARY, with Library Admin and Home screen links. */
+function LoginHeader() {
+  return (
+    <header className="topbar topbar-login">
+      <div className="topbar-inner">
+        <Link className="brand" to="/" aria-label="Poornima University Library: home">
+          <Shield />
+          <span className="brand-uni brand-uni-sans">
+            <strong>Poornima</strong>
+            <span>University</span>
+          </span>
+          <span className="brand-divider" aria-hidden="true" />
+          <span className="brand-library">
+            <Icon name="book-open" size={36} />
+            Library
+          </span>
+        </Link>
+        <nav className="login-links" aria-label="Login page">
+          <Link to="/login" aria-current="page">
+            Library Admin
+          </Link>
+          <span className="login-links-divider" aria-hidden="true" />
+          <Link to="/">
+            <Icon name="home" size={28} />
+            <span>Home screen</span>
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
 export default function Header() {
   const { data } = useApi("/api/config");
   const { me, signOut } = useAuth();
@@ -78,6 +110,7 @@ export default function Header() {
   // The Login button lives on the Home screen only; admin pages have their own Logout.
   const isHome = location.pathname === "/";
   const name = data?.libraryName || "Central Library";
+  if (location.pathname === "/login") return <LoginHeader />;
   return (
     <header className="topbar">
       <div className="topbar-inner">

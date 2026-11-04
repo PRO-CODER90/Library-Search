@@ -84,7 +84,8 @@ function AdminRoute() {
 export default function App() {
   // Home and the book page fit one screen; search results and other pages scroll.
   const { pathname } = useLocation();
-  const fit = pathname === "/" || pathname.startsWith("/book/");
+  const isLogin = pathname === "/login";
+  const fit = pathname === "/" || pathname.startsWith("/book/") || isLogin;
   // Every new page starts at the top (nothing anchors or scrolls on load).
   // Braces matter: newer browsers return a Promise from scrollTo, and an effect
   // must return nothing or a cleanup function (returning it crashed the page).
@@ -94,7 +95,7 @@ export default function App() {
   return (
     <AuthProvider>
       <SchemaProvider>
-        <div className={fit ? "shell shell-fit" : "shell"}>
+        <div className={`shell${fit ? " shell-fit" : ""}${isLogin ? " shell-login" : ""}`}>
           <a className="skip-link" href="#main">
             Skip to content
           </a>
@@ -112,7 +113,7 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
-          <Footer />
+          {!isLogin && <Footer />}
         </div>
       </SchemaProvider>
     </AuthProvider>
