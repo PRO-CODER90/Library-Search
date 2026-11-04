@@ -1393,6 +1393,11 @@ kbd {
     border-radius: 26px;
   }
 }
+@media (max-width: 640px) {
+  .topbar-login .brand-uni {
+    display: flex;
+  }
+}
 @media (max-width: 420px) {
   .login-links a[aria-current="page"] {
     display: none;
