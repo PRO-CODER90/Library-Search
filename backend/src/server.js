@@ -20,6 +20,7 @@ import { registerUploadRoutes } from "./routes/upload.js";
 import { registerAdminSessionRoutes } from "./routes/adminSession.js";
 import { registerHitRoutes } from "./routes/hits.js";
 import { registerPopularRoutes } from "./routes/popular.js";
+import { registerDuplicateRoutes } from "./routes/duplicates.js";
 import { createHitStore } from "./services/hitStore.js";
 
 const notFound = () => new HttpError(404, "Unknown API endpoint.");
@@ -50,6 +51,7 @@ export function createApp({ db, config, log, fetchImpl }) {
   registerAdminSessionRoutes(router, ctx);
   registerHitRoutes(router, ctx);
   registerPopularRoutes(router, ctx);
+  registerDuplicateRoutes(router, ctx);
   const serveStatic = createStaticHandler(config);
 
   async function handleApi(req, res, url) {

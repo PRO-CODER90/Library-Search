@@ -1057,6 +1057,11 @@ kbd {
   overflow-wrap: anywhere;
 }
 
+.other-copies {
+  margin: 12px 0 0;
+  color: var(--navy-900);
+}
+
 /* ---------- buttons ---------- */
 
 .button {

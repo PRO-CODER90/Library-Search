@@ -28,7 +28,7 @@ export const isHiddenKey = (key) => HIDDEN_KEYS.has(key);
 export const LABEL_OVERRIDES = {
   first_author_full_name: "First author",
   second_author_full_name: "Second author",
-  location_is_placeholder: "Placeholder location",
+  location_is_placeholder: "Temporary location",
 };
 
 /** "  ISBN-13 " -> "isbn_13"; non-Latin letters are kept. */

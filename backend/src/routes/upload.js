@@ -68,6 +68,8 @@ export function registerUploadRoutes(router, { db, config, audit }) {
         mode: options.mode || "replace",
         keyField: options.keyField || "",
         dryRun: flag(options.dryRun),
+        onDuplicate: options.onDuplicate || "smart",
+        uploadedBy: session.u,
       });
       if (!report.dryRun) {
         audit(report.mode === "replace" ? "replace_catalogue" : `upload_${report.mode}`, req, {

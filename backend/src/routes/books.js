@@ -1,6 +1,7 @@
 import { HttpError, intParam, readJson } from "../http.js";
 import { facets, libraryStats, listBooks, presentRow } from "../services/searchEngine.js";
 import { getField, listFields } from "../services/fieldRegistry.js";
+import { copiesOf } from "../services/duplicates.js";
 import { addRecord, deleteRecord, setLocations, updateRecord, wipeLibrary } from "../services/library.js";
 
 const RESERVED = new Set(["page", "limit", "confirm", "missing", "duplicates"]);
@@ -16,6 +17,8 @@ function fetchBook(db, id, includeHidden = false) {
   if (!row) throw new HttpError(404, "Book not found.");
   // The full record with timestamps is for the admin's Details panel only.
   const extra = includeHidden ? { createdAt: row.created_at, updatedAt: row.updated_at ?? row.created_at } : {};
+  // Other copies of the same book (same title + first author) and where they are.
+  extra.copies = copiesOf(db, id);
   return presentRow(row, listFields(db), extra, { includeHidden });
 }
 

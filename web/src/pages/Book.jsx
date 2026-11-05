@@ -3,6 +3,26 @@ import { useApi, useDocumentTitle } from "../hooks.js";
 import { isTruthy, titleOf, useSchema } from "../schema.jsx";
 import { AvailabilityBadge, Directions, ErrorState, LocationSlip, ShelfDiagram, Skeleton } from "../components/ui.jsx";
 
+/** Other copies of this book on other shelves (locations only, no counts). */
+function OtherCopies({ book }) {
+  const sig = (parts) => parts.map((p) => p.value).join("/");
+  const here = sig(book.locationParts);
+  const seen = new Set([here]);
+  const elsewhere = [];
+  for (const copy of book.copies ?? []) {
+    const s = sig(copy.locationParts);
+    if (!s || seen.has(s)) continue;
+    seen.add(s);
+    elsewhere.push(copy.locationParts.map((p) => `${p.label} ${p.value}`).join(" · "));
+  }
+  if (!elsewhere.length) return null;
+  return (
+    <p className="other-copies">
+      <strong>Also available at:</strong> {elsewhere.join("; ")}
+    </p>
+  );
+}
+
 export default function Book() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -63,6 +83,7 @@ export default function Book() {
           </div>
         )}
         {unavailable && <p className="note">This book is not available right now. Ask at the help desk.</p>}
+        <OtherCopies book={book} />
       </section>
 
     </article>

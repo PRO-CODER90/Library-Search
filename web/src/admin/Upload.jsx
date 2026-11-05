@@ -7,8 +7,13 @@ import { Confirm, Tags, useToast } from "./parts.jsx";
 
 const MODES = [
   ["replace", "Replace", "The file becomes the whole catalogue. Columns not in the file are removed."],
-  ["append", "Add", "Add these rows to the existing books."],
+  ["append", "Add new books", "Add the books from this file to the catalogue; duplicates are handled as chosen below."],
   ["upsert", "Update matching", "Match on entity_id (or title + first author), update those books, add the rest."],
+];
+const ON_DUPLICATE = [
+  ["smart", "Smart (recommended)", "Same book, same place: skipped (only blank details are filled in). Same book on another shelf: added as another copy."],
+  ["skip", "Skip all duplicates", "Import only books that are not in the catalogue yet."],
+  ["all", "Import everything", "No checking: this can create duplicates."],
 ];
 const ROLES = [
   ["", "—"],
@@ -89,7 +94,7 @@ function RowsPreview({ fields, rows }) {
           {rows.map((r, i) => (
             <tr key={i}>
               {fields.map((f) => (
-                <td key={f.key} className={r.placeholder.includes(f.key) ? "cell-placeholder" : undefined} title={r.placeholder.includes(f.key) ? "Placeholder (generated)" : undefined}>
+                <td key={f.key} className={r.placeholder.includes(f.key) ? "cell-placeholder" : undefined} title={r.placeholder.includes(f.key) ? "Temporary location (auto-filled)" : undefined}>
                   {r.data[f.key] ?? ""}
                 </td>
               ))}
@@ -105,7 +110,7 @@ function Summary({ r }) {
   const fields = r.preview.fields.length;
   return (
     <p className="summary">
-      <strong>{r.rowsRead.toLocaleString()}</strong> books · <strong>{fields}</strong> fields · <strong>{r.placeholdersFilled}</strong> placeholder
+      <strong>{r.rowsRead.toLocaleString()}</strong> rows · <strong>{fields}</strong> fields · <strong>{r.placeholdersFilled}</strong> temporary
       locations filled · <strong>{r.warnings.length}</strong> warnings
     </p>
   );
@@ -116,6 +121,7 @@ export default function Upload() {
   const toast = useToast();
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState(null);
+  const [onDuplicate, setOnDuplicate] = useState("smart");
   const [preview, setPreview] = useState(null);
   const [done, setDone] = useState(null);
   const [edits, setEdits] = useState({});
@@ -127,17 +133,18 @@ export default function Upload() {
   // First load replaces; after that, update matching books by default.
   useEffect(() => {
     api("/api/health")
-      .then((h) => setMode((m) => m ?? (h.books ? "upsert" : "replace")))
+      .then((h) => setMode((m) => m ?? (h.books ? "append" : "replace")))
       .catch(() => setMode((m) => m ?? "replace"));
   }, []);
 
-  async function send(dryRun, chosen = file, chosenMode = mode) {
+  async function send(dryRun, chosen = file, chosenMode = mode, chosenDup = onDuplicate) {
     if (!chosen) return null;
     setError("");
     setBusy(true);
     const body = new FormData();
     body.append("file", chosen);
     body.append("mode", chosenMode);
+    body.append("onDuplicate", chosenDup);
     body.append("dryRun", String(dryRun));
     try {
       return await call("/api/upload", { method: "POST", body });
@@ -149,12 +156,12 @@ export default function Upload() {
     }
   }
 
-  async function choose(f, chosenMode = mode) {
+  async function choose(f, chosenMode = mode, chosenDup = onDuplicate) {
     if (!f) return;
     setFile(f);
     setDone(null);
     setEdits({});
-    setPreview(await send(true, f, chosenMode));
+    setPreview(await send(true, f, chosenMode, chosenDup));
   }
 
   async function confirm() {
@@ -222,6 +229,29 @@ export default function Upload() {
         </fieldset>
       )}
 
+      {mode && mode !== "upsert" && (
+        <fieldset className="modes">
+          <legend>When duplicates are found</legend>
+          {ON_DUPLICATE.map(([value, label, help]) => (
+            <label className="check" key={value}>
+              <input
+                type="radio"
+                name="onDuplicate"
+                value={value}
+                checked={onDuplicate === value}
+                onChange={() => {
+                  setOnDuplicate(value);
+                  if (file) choose(file, mode, value);
+                }}
+              />
+              <span>
+                <strong>{label}</strong>: {help}
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -244,7 +274,18 @@ export default function Upload() {
             )}{" "}
             {preview.detected.matchKey && <>Matching on {preview.detected.matchKey}.</>}
           </p>
+          {preview.alreadyUploaded && (
+            <p className="banner banner-warn" role="status">
+              This exact file was already uploaded. With “Smart” nothing new is imported.
+            </p>
+          )}
           <Summary r={preview} />
+          {preview.mode !== "upsert" && (
+            <p className="dup-counts">
+              New <strong>{preview.duplicates.new}</strong> · Exact duplicates <strong>{preview.duplicates.exact}</strong> · Different place{" "}
+              <strong>{preview.duplicates.differentPlace}</strong>
+            </p>
+          )}
           {preview.warnings.length > 0 && (
             <ul className="report-warnings">
               {preview.warnings.map((w) => (
@@ -260,7 +301,7 @@ export default function Upload() {
           <FieldsPreview fields={preview.preview.fields} edits={edits} setEdits={setEdits} />
           <h2 className="section-title">First {preview.preview.rows.length} rows</h2>
           <p className="muted">
-            <span className="cell-placeholder legend">Highlighted</span> cells are generated placeholder locations; correct them later in Books.
+            <span className="cell-placeholder legend">Highlighted</span> cells are temporary locations (auto-filled); set the real ones later in Books.
           </p>
           <RowsPreview fields={preview.preview.fields} rows={preview.preview.rows} />
           <div className="dialog-actions dialog-actions-start">
@@ -284,7 +325,7 @@ export default function Upload() {
       {done && (
         <div className="report report-done">
           <p className="report-title">
-            Imported {done.rowsImported.toLocaleString()} books ({done.rowsInserted} new, {done.rowsUpdated} updated).{" "}
+            Imported {done.rowsImported.toLocaleString()} books ({done.rowsInserted} new, {done.rowsUpdated} updated, {done.rowsSkipped} skipped).{" "}
             <Link to="../books" relative="path">
               Go to Books →
             </Link>

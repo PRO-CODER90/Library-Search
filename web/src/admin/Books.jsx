@@ -4,18 +4,20 @@ import { useDebounced } from "../hooks.js";
 import { buildSchema, titleOf } from "../schema.jsx";
 import { useAdmin } from "./AdminApp.jsx";
 import { Confirm, Dialog, useToast } from "./parts.jsx";
+import { Icon } from "../components/Icon.jsx";
+import DuplicatesReview from "./Duplicates.jsx";
 
 const PAGE_SIZE = 50;
 const PLACEHOLDER = "location_is_placeholder";
 const CHIPS = [
   ["", "All"],
-  ["placeholder", "Needs real location"],
+  ["placeholder", "Temporary location"],
   ["missing", "Missing author"],
   ["duplicates", "Duplicates"],
 ];
 const CHIP_QUERY = { placeholder: { [PLACEHOLDER]: "true" }, missing: { missing: "author" }, duplicates: { duplicates: "1" } };
 
-const LABELS = { [PLACEHOLDER]: "Placeholder location", entity_id: "Entity ID" };
+const LABELS = { [PLACEHOLDER]: "Temporary location", entity_id: "Entity ID" };
 
 /** Admin-only: the whole stored record, including fields visitors never see. */
 function DetailsPanel({ id, schema }) {
@@ -83,7 +85,7 @@ function BookForm({ book, schema, onSaved, onClose }) {
   return (
     <Dialog title={book ? "Edit book" : "Add a book"} onClose={onClose} wide>
       <form className="form" onSubmit={submit}>
-        {book?.data[PLACEHOLDER] === "true" && <p className="placeholder-note">The location is a placeholder. Changing Floor, Rack or Shelf makes it real.</p>}
+        {book?.data[PLACEHOLDER] === "true" && <p className="placeholder-note">Temporary location (auto-filled). Set the real Floor, Rack and Shelf; saving them removes the tag.</p>}
         <div className="form-grid">
           {editable.map((f) => (
             <div className={`field${f.role === "title" ? " field-wide" : ""}`} key={f.key}>
@@ -141,24 +143,37 @@ async function download(path, fallback) {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
-/** Inline Floor/Rack/Shelf editor for one row; saves on Enter or blur. */
+/** Inline Floor/Rack/Shelf editor for one row; saves on Enter or blur and says so. */
 function LocationCells({ book, locationFields, onSave }) {
   const [values, setValues] = useState(() => Object.fromEntries(locationFields.map((f) => [f.key, book.data[f.key] ?? ""])));
+  const [status, setStatus] = useState(""); // "", "saving", "saved", "error"
   useEffect(() => {
     setValues(Object.fromEntries(locationFields.map((f) => [f.key, book.data[f.key] ?? ""])));
   }, [book, locationFields]);
-  const dirty = locationFields.some((f) => (values[f.key] ?? "") !== (book.data[f.key] ?? ""));
-  const save = () => dirty && onSave(book, values);
-  return locationFields.map((f) => (
+  const changed = (key) => (values[key] ?? "") !== (book.data[key] ?? "");
+  const dirty = locationFields.some((f) => changed(f.key));
+  async function save() {
+    if (!dirty || status === "saving") return;
+    setStatus("saving");
+    const ok = await onSave(book, values);
+    setStatus(ok ? "saved" : "error");
+    if (ok) setTimeout(() => setStatus((s) => (s === "saved" ? "" : s)), 2500);
+  }
+  return locationFields.map((f, i) => (
     <td key={f.key} className="loc-cell">
       <input
-        className="inline-input loc-input"
+        className={`inline-input loc-input${changed(f.key) ? " is-changed" : ""}${status === "error" ? " is-error" : ""}`}
         aria-label={`${f.label} for ${book.data.title ?? book.id}`}
         value={values[f.key]}
         onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
         onBlur={save}
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
       />
+      {i === locationFields.length - 1 && status && (
+        <span className={`save-state save-${status}`} role="status">
+          {status === "saving" ? "Saving…" : status === "saved" ? "Saved ✓" : "Not saved"}
+        </span>
+      )}
     </td>
   ));
 }
@@ -174,10 +189,17 @@ export default function Books() {
   const [selected, setSelected] = useState(new Set());
   const [bulk, setBulk] = useState({});
   const [dialog, setDialog] = useState(null);
+  const [temporary, setTemporary] = useState(0);
+  const [dupVersion, setDupVersion] = useState(0);
+  const loadTemporary = useCallback(() => {
+    call(`/api/books${toQuery({ [PLACEHOLDER]: "true", limit: 1 })}`)
+      .then((d) => setTemporary(d.total ?? 0))
+      .catch(() => {});
+  }, [call]);
 
   const loadSchema = useCallback(() => call("/api/fields").then(({ fields }) => setSchema(buildSchema(fields))), [call]);
   const load = useCallback(
-    async (page = 1) => {
+    async (page = 1, { keepSelection = false } = {}) => {
       try {
         const extra = CHIP_QUERY[chip] ?? {};
         const path = q ? `/api/search${toQuery({ q, page, limit: PAGE_SIZE })}` : `/api/books${toQuery({ ...extra, page, limit: PAGE_SIZE })}`;
@@ -185,7 +207,7 @@ export default function Books() {
         let items = data.results;
         if (q && chip === "placeholder") items = items.filter((b) => b.data[PLACEHOLDER] === "true");
         setList((s) => ({ items: page === 1 ? items : [...s.items, ...items], total: data.total, page, error: null }));
-        if (page === 1) setSelected(new Set());
+        if (page === 1 && !keepSelection) setSelected(new Set());
       } catch (error) {
         setList((s) => ({ ...s, error }));
       }
@@ -196,14 +218,30 @@ export default function Books() {
     loadSchema().catch(() => {});
   }, [loadSchema]);
   useEffect(() => {
-    load(1);
-  }, [load]);
+    if (chip !== "duplicates") load(1);
+  }, [load, chip]);
+  useEffect(() => {
+    loadTemporary();
+  }, [loadTemporary]);
 
-  async function setLocation(ids, values) {
+  async function setLocation(ids, values, { quiet = false } = {}) {
     try {
       const { updated } = await call("/api/books/location", { method: "PATCH", body: { ids, values } });
-      toast(`Location saved for ${updated} book${updated === 1 ? "" : "s"}.`);
+      if (!quiet) toast(`Location saved for ${updated} book${updated === 1 ? "" : "s"}.`);
+      load(1, { keepSelection: quiet });
+      loadTemporary();
+      return true;
+    } catch (error) {
+      toast(error.message, "error");
+      return false;
+    }
+  }
+  async function verify(ids) {
+    try {
+      const { verified } = await call("/api/books/verify-location", { method: "POST", body: ids ? { ids } : { all: true } });
+      toast(`${verified} location${verified === 1 ? "" : "s"} marked as verified.`);
       load(1);
+      loadTemporary();
     } catch (error) {
       toast(error.message, "error");
     }
@@ -265,6 +303,28 @@ export default function Books() {
         ))}
       </div>
 
+      {temporary > 0 && (
+        <div className="banner banner-warn" role="status">
+          <Icon name="alert" size={18} />
+          <span>
+            <strong>{temporary.toLocaleString()}</strong> {temporary === 1 ? "book still has a" : "books still have"} temporary location
+            {temporary === 1 ? "" : "s"}.
+          </span>
+          {chip !== "placeholder" && (
+            <button type="button" className="button button-small button-ghost" onClick={() => setChip("placeholder")}>
+              Show them
+            </button>
+          )}
+          <button type="button" className="button button-small" onClick={() => setDialog({ type: "verify-all" })}>
+            Mark all as verified
+          </button>
+        </div>
+      )}
+
+      {chip === "duplicates" && <DuplicatesReview schema={schema} version={dupVersion} onEdit={(book) => setDialog({ type: "edit", book })} onChanged={loadTemporary} />}
+
+      {chip !== "duplicates" && (
+        <>
       {selected.size > 0 && locationFields.length > 0 && (
         <form
           className="bulk-bar"
@@ -319,12 +379,21 @@ export default function Books() {
                     {titleOf(b.data, schema)}
                   </button>
                   <span className="muted">{[author, second].filter((f) => f && b.data[f.key]).map((f) => b.data[f.key]).join(" · ")}</span>
-                  {b.data[PLACEHOLDER] === "true" && <span className="tag tag-placeholder">Placeholder</span>}
+                  {b.data[PLACEHOLDER] === "true" && (
+                    <span className="temp-row">
+                      <span className="tag tag-placeholder" title="Auto-filled. Set the real Floor, Rack and Shelf.">
+                        <Icon name="alert" size={13} /> Temporary location
+                      </span>
+                      <button type="button" className="link-button verify-link" onClick={() => verify([b.id])} title="This location is correct">
+                        <Icon name="check" size={14} /> Verify
+                      </button>
+                    </span>
+                  )}
                 </td>
-                <LocationCells book={b} locationFields={locationFields} onSave={(book, values) => setLocation([book.id], values)} />
+                <LocationCells book={b} locationFields={locationFields} onSave={(book, values) => setLocation([book.id], values, { quiet: true })} />
                 <td className="table-actions">
                   <button type="button" className="button button-small button-ghost" onClick={() => setDialog({ type: "edit", book: b })} aria-label={`Edit ${titleOf(b.data, schema)}`}>
-                    ✎ Edit
+                    <Icon name="pencil" size={15} /> Edit
                   </button>
                   <button type="button" className="button button-small button-danger" onClick={() => setDialog({ type: "delete", book: b })}>
                     Delete
@@ -341,6 +410,8 @@ export default function Books() {
             Show more
           </button>
         </div>
+      )}
+        </>
       )}
 
       <section className="danger-zone">
@@ -361,6 +432,7 @@ export default function Books() {
             toast(`${dialog.book ? "Saved" : "Added"} “${titleOf(saved.data, schema)}”.`);
             if (saved.newFields?.length) loadSchema();
             load(1);
+            setDupVersion((v) => v + 1);
           }}
         />
       )}
@@ -370,6 +442,15 @@ export default function Books() {
           body={`“${titleOf(dialog.book.data, schema)}” will be removed from the catalogue.`}
           confirmLabel="Delete"
           onConfirm={() => remove(dialog.book)}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.type === "verify-all" && (
+        <Confirm
+          title="Mark all locations as verified?"
+          body={`The ${temporary} temporary locations will be treated as correct. Do this only if they match the real shelves.`}
+          confirmLabel="Mark all as verified"
+          onConfirm={() => verify(null)}
           onClose={() => setDialog(null)}
         />
       )}

@@ -48,6 +48,38 @@ const SCHEMA = `
     value INTEGER NOT NULL DEFAULT 0
   );
 
+  -- Every uploaded file (SHA-256), so the same file is recognised next time.
+  CREATE TABLE IF NOT EXISTS uploads (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename    TEXT,
+    sha256      TEXT NOT NULL,
+    mode        TEXT,
+    counts      TEXT,
+    uploaded_by TEXT,
+    created_at  TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+  CREATE INDEX IF NOT EXISTS uploads_sha ON uploads (sha256);
+
+  -- Duplicate groups the admin marked as real copies or as not duplicates.
+  CREATE TABLE IF NOT EXISTS duplicate_ignores (
+    key        TEXT PRIMARY KEY,
+    kind       TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Rows removed or changed by merge/delete, kept 30 days for Undo.
+  CREATE TABLE IF NOT EXISTS book_history (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    action_id  TEXT NOT NULL,
+    kind       TEXT NOT NULL,
+    row_id     INTEGER NOT NULL,
+    data       TEXT NOT NULL,
+    dataset_id INTEGER,
+    created_at TEXT,
+    at         TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS book_history_action ON book_history (action_id);
+
   CREATE TABLE IF NOT EXISTS notices (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     title      TEXT NOT NULL,

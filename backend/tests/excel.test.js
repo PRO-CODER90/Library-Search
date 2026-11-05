@@ -12,7 +12,8 @@ import { headerKeys, roleCandidates } from "../src/services/columnMapper.js";
 
 const TEMPLATE = readFileSync(new URL("./fixtures/Catalog_and_Holding_Creation_Template_1.xlsx", import.meta.url));
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-const upload = (app, buf, opts = {}) => app.upload(buf, { filename: "catalogue.xlsx", type: XLSX, ...opts });
+// Most checks are about reading the file, so import every row; duplicate handling has its own tests.
+const upload = (app, buf, opts = {}) => app.upload(buf, { filename: "catalogue.xlsx", type: XLSX, onDuplicate: "all", ...opts });
 const all = async (app, query = "") => {
   const out = [];
   for (let page = 1; ; page++) {
@@ -209,7 +210,7 @@ describe("uploading the supplied template", () => {
     const template = await fetch(`${app.base}/api/template`, { headers: { Cookie: app.cookie } });
     const t = readXlsx(Buffer.from(await template.arrayBuffer()));
     assert.equal(t.sheetName, "Holding_Creation");
-    assert.ok(t.rows[0].includes("Title") && t.rows[0].includes("Second author") && !t.rows[0].includes("Placeholder location"));
+    assert.ok(t.rows[0].includes("Title") && t.rows[0].includes("Second author") && !t.rows[0].includes("Temporary location"));
     assert.equal((await app.raw("/api/template")).status, 401, "admin only");
   });
 
@@ -242,8 +243,10 @@ test("the bundled catalogue (Holding_Creation template) loads into an empty data
   const db = openDatabase(":memory:");
   const config = { ...loadConfig({ ADMIN_DISABLED: "true" }), autoLoadSample: true };
   const report = loadSampleIfEmpty(db, config);
-  assert.equal(report.rowsImported, 85);
-  assert.equal(db.prepare("SELECT count(*) AS n FROM books").get().n, 85);
+  // 85 rows; repeated rows (same title, author and place) are imported once.
+  assert.equal(report.rowsRead, 85);
+  assert.equal(report.rowsImported + report.duplicates.exact, 85);
+  assert.equal(db.prepare("SELECT count(*) AS n FROM books").get().n, report.rowsImported);
   assert.equal(loadSampleIfEmpty(db, config), null, "never reloads over existing data");
 });
 
